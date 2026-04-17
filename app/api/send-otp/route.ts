@@ -1,5 +1,5 @@
 import { connectDB } from "@/app/lib/mongodb";
-import { generateOtp, isValidMobile } from "@/app/lib/auth";
+import { isValidMobile } from "@/app/lib/auth";
 import User from "@/app/models/User";
 
 export async function POST(req: Request) {
@@ -25,14 +25,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const otp = generateOtp();
-    const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+    const otp = process.env.DUMMY_OTP ?? "000000";
+    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 min for demo
 
     user.otp = otp;
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    console.log(`[OTP] ${cleanMobile}: ${otp}`);
+    console.log(`[OTP-DEMO] ${cleanMobile}: ${otp}`);
 
     return Response.json({ success: true });
   } catch (err) {

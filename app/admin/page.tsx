@@ -15,6 +15,7 @@ type AdminUser = {
   profileImageUrl?: string;
   isAllowed: boolean;
   isVerified: boolean;
+  isAdmin?: boolean;
   uploadedDocs: number;
   documents?: {
     name: string;
@@ -30,6 +31,7 @@ type AdminUser = {
     q4: string;
     submittedAt?: string;
   } | null;
+  onboardingKit?: string[];
 };
 
 const CHECKIN_SCALE: Record<number, { emoji: string; label: string }> = {
@@ -46,6 +48,20 @@ const CHECKIN_QUESTIONS: Record<string, string> = {
   q3: "How helpful has your buddy been in your onboarding journey?",
   q4: "What has been the most positive part about your journey?",
 };
+
+const KIT_ITEMS: { name: string; icon: string }[] = [
+  { name: "Coffee Mug",           icon: "☕" },
+  { name: "Water Bottle",         icon: "💧" },
+  { name: "Customized Diary & Pen", icon: "📓" },
+  { name: "Chair Cushion",        icon: "🪑" },
+  { name: "Leadership Book",      icon: "📘" },
+  { name: "Trolley Bag",          icon: "🧳" },
+  { name: "Tech Gear",            icon: "💻" },
+];
+
+const KIT_ICON: Record<string, string> = Object.fromEntries(
+  KIT_ITEMS.map((i) => [i.name, i.icon])
+);
 
 const BUDDY_QUESTIONS: Record<string, string> = {
   passion_work: "What are you most passionate about in life and work?",
@@ -82,7 +98,7 @@ export default function AdminPage() {
   const [submitting, setSubmitting] = useState(false);
   const [busyMobile, setBusyMobile] = useState<string | null>(null);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
-  const [expandedTab, setExpandedTab] = useState<"docs" | "buddy" | "checkin">("docs");
+  const [expandedTab, setExpandedTab] = useState<"docs" | "buddy" | "checkin" | "kit">("docs");
 
   const totalUsers = useMemo(() => users.length, [users.length]);
 
@@ -577,6 +593,20 @@ export default function AdminPage() {
                               </button>
                               <button
                                 type="button"
+                                onClick={() => {
+                                  if (isExpanded && expandedTab === "kit") {
+                                    setExpandedMobile(null);
+                                  } else {
+                                    setExpandedMobile(user.mobile);
+                                    setExpandedTab("kit");
+                                  }
+                                }}
+                                className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/15"
+                              >
+                                {isExpanded && expandedTab === "kit" ? "Hide Kit" : "🎁 Kit"}
+                              </button>
+                              <button
+                                type="button"
                                 disabled={rowBusy}
                                 onClick={() => void handleToggle(user.mobile)}
                                 className="rounded-lg border border-primary/30 bg-background/60 px-3 py-1.5 text-xs font-semibold text-foreground transition hover:border-primary/55 disabled:opacity-60"
@@ -709,6 +739,48 @@ export default function AdminPage() {
                                         </div>
                                       ))}
                                     </div>
+                                  )}
+                                </div>
+                              ) : expandedTab === "kit" ? (
+                                /* ── Onboarding Kit tab ───────────────────── */
+                                <div>
+                                  <div className="mb-3 flex items-center gap-2">
+                                    <span className="text-base">🎁</span>
+                                    <p className="text-xs font-semibold text-amber-300">
+                                      Onboarding Kit — {user.name || user.mobile}
+                                    </p>
+                                  </div>
+
+                                  {!user.onboardingKit || user.onboardingKit.length === 0 ? (
+                                    <p className="text-xs text-muted">
+                                      This user hasn&apos;t selected their onboarding kit yet.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      <p className="mb-3 text-[11px] text-muted">
+                                        {user.onboardingKit.length} item{user.onboardingKit.length !== 1 ? "s" : ""} selected
+                                      </p>
+                                      <div className="flex flex-wrap gap-2">
+                                        {KIT_ITEMS.map((item) => {
+                                          const chosen = user.onboardingKit!.includes(item.name);
+                                          return (
+                                            <div
+                                              key={item.name}
+                                              className={[
+                                                "flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition",
+                                                chosen
+                                                  ? "border-amber-400/30 bg-amber-500/10 text-amber-200"
+                                                  : "border-border/40 bg-background/30 text-muted/50 line-through",
+                                              ].join(" ")}
+                                            >
+                                              <span>{KIT_ICON[item.name] ?? "📦"}</span>
+                                              <span>{item.name}</span>
+                                              {chosen && <span className="text-[10px] text-amber-400">✓</span>}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </>
                                   )}
                                 </div>
                               ) : (

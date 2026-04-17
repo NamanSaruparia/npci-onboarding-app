@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
     const users = await User.find({})
       .sort({ createdAt: -1 })
-      .select("name mobile position role location profileImageUrl isAllowed isVerified uploadedDocs documents buddyAnswers checkInAnswers createdAt updatedAt");
+      .select("name mobile position role location profileImageUrl isAllowed isVerified isAdmin uploadedDocs documents buddyAnswers checkInAnswers onboardingKit createdAt updatedAt");
 
     return Response.json({ success: true, users });
   } catch (err) {

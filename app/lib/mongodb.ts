@@ -11,6 +11,8 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI not defined");
 }
 
+const uri: string = MONGODB_URI;
+
 let cached = global.mongoose;
 
 if (!cached) {
@@ -23,7 +25,7 @@ export async function connectDB() {
   if (dbCache.conn) return dbCache.conn;
 
   if (!dbCache.promise) {
-    dbCache.promise = mongoose.connect(MONGODB_URI, {
+    dbCache.promise = mongoose.connect(uri, {
       dbName: "npci-db",
     });
   }

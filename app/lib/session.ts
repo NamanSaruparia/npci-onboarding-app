@@ -11,6 +11,7 @@ export type SessionUser = {
   profileImageUrl?: string;
   isAllowed?: boolean;
   isVerified?: boolean;
+  isAdmin?: boolean;
   uploadedDocs?: number;
   [key: string]: unknown;
 };
@@ -30,4 +31,14 @@ export function hasValidSessionUser(): boolean {
   if (typeof window === "undefined") return false;
   const u = parseSessionUser(localStorage.getItem("user"));
   return Boolean(u?.mobile);
+}
+
+/**
+ * Returns the correct post-login destination based on the stored session.
+ * Admins go to /admin; everyone else goes to /dashboard.
+ */
+export function sessionDestination(): "/admin" | "/dashboard" {
+  if (typeof window === "undefined") return "/dashboard";
+  const u = parseSessionUser(localStorage.getItem("user"));
+  return u?.isAdmin ? "/admin" : "/dashboard";
 }

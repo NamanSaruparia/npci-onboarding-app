@@ -56,7 +56,7 @@ export default function WelcomePage() {
                   onClick={() => router.replace("/dashboard")}
                   className="mt-1 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
                 >
-                  Begin Journey
+                  Begin Your Journey →
                 </button>
               </div>
 

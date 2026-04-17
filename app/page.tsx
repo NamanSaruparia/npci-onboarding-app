@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { hasValidSessionUser } from "@/app/lib/session";
+import { hasValidSessionUser, sessionDestination } from "@/app/lib/session";
 
 const SPLASH_DURATION_S = 2;
 
@@ -16,7 +16,7 @@ export default function Home() {
     if (typeof window === "undefined") return;
     if (hasValidSessionUser()) {
       setSkipSplash(true);
-      router.replace("/dashboard");
+      router.replace(sessionDestination());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
   }, []);

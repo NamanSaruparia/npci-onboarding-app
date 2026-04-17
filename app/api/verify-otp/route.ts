@@ -49,6 +49,7 @@ export async function POST(req: Request) {
         mobile: user.mobile,
         isVerified: user.isVerified,
         isAllowed: user.isAllowed,
+        isAdmin: Boolean(user.isAdmin),
       },
     });
   } catch (err) {

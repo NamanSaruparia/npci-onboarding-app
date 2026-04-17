@@ -103,6 +103,10 @@ const UserSchema = new mongoose.Schema({
     type: [BuddyAnswerSchema],
     default: [],
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
   checkInAnswers: {
     type: CheckInAnswersSchema,
     default: null,
@@ -118,7 +122,8 @@ if (
   ExistingUserModel &&
   (!ExistingUserModel.schema.path("documents") ||
     !ExistingUserModel.schema.path("buddyAnswers") ||
-    !ExistingUserModel.schema.path("checkInAnswers"))
+    !ExistingUserModel.schema.path("checkInAnswers") ||
+    !ExistingUserModel.schema.path("isAdmin"))
 ) {
   delete (mongoose.models as Record<string, unknown>).User;
 }
