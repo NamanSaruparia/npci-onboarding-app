@@ -1,142 +1,110 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 import { motion } from "framer-motion";
+import { PageHeader } from "../components/PageHeader";
+import { SessionLoading } from "../components/SessionLoading";
+import { useRequireSession } from "../hooks/useRequireSession";
 
 const videos = [
   {
-    title: "NPCI: Digital Payment Vision",
-    description: "Official NPCI overview",
-    url: "https://www.youtube.com/embed/c8J0C2an8ko",
-    thumbnail: "https://img.youtube.com/vi/c8J0C2an8ko/0.jpg",
-    tag: "Vision",
+    title: "NPCI Overview",
+    url: "https://youtu.be/c8J0C2an8ko?si=-H4Xcx0qrEfKu4at",
   },
   {
-    title: "Podcast with Dilip Asbe on UPI and NPCI",
-    description: "Leadership insights on digital payments",
-    url: "https://www.youtube.com/embed/awPQ8oVOyQ0",
-    thumbnail: "https://img.youtube.com/vi/awPQ8oVOyQ0/0.jpg",
-    tag: "Leadership",
+    title: "Women's Day Podcast",
+    url: "https://youtu.be/awPQ8oVOyQ0?si=NwAb4AZqGnuwljnZ",
   },
   {
-    title: "UPI Transaction Flow",
-    description: "Step-by-step payment journey",
-    url: "https://www.youtube.com/embed/wWDzhLSK1K8",
-    thumbnail: "https://img.youtube.com/vi/wWDzhLSK1K8/0.jpg",
-    tag: "Learning",
+    title: "Episode 1",
+    url: "https://youtu.be/iqIlbXxfV5g?si=ufgfuSGfL_wQlMM1",
   },
   {
-    title: "UPI System Design",
-    description: "Understanding backend architecture",
-    url: "https://www.youtube.com/embed/fqySz1Me2pI",
-    thumbnail: "https://img.youtube.com/vi/fqySz1Me2pI/0.jpg",
-    tag: "Technical",
+    title: "Episode 2",
+    url: "https://youtu.be/osuR5mV8QGI?si=s4_L_nUI3_8FpFij",
   },
 ];
 
-export default function Videos() {
-  const [selectedVideo, setSelectedVideo] = useState(videos[0]);
+function getYoutubeId(url: string): string | undefined {
+  const match = url.match(/(?:youtu\.be\/|v=)([^?&#]+)/);
+  return match?.[1];
+}
+
+function youtubeThumbnail(url: string): string {
+  const id = getYoutubeId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
+}
+
+function VideosContent() {
+  const { ready, sessionUser } = useRequireSession();
+
+  if (!ready || !sessionUser) {
+    return <SessionLoading />;
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white p-5">
+    <div className="min-h-screen bg-white text-slate-800">
+      <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+        <div className="app-page-base rounded-[24px] p-4 shadow-sm sm:p-6">
+          <PageHeader
+            title="Learning"
+            subtitle="Curated content to build context before Day 1."
+            titleEmoji="🎥"
+          />
 
-      {/* HEADER */}
-      <div className="mb-5">
-        <h1 className="text-2xl font-semibold">
-          🎥 Learning & Leadership Hub
-        </h1>
-        <p className="text-gray-400 text-sm">
-          Learn how NPCI powers India’s digital economy
-        </p>
-      </div>
+          <motion.div
+            key="deep-dive"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <section>
+              <h2 className="mb-3 text-lg font-semibold text-slate-800">
+                Continue Learning
+              </h2>
 
-      {/* MAIN PLAYER */}
-      <motion.div
-        key={selectedVideo.url}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mb-6"
-      >
-        <iframe
-          width="100%"
-          height="260"
-          src={selectedVideo.url}
-          title="video player"
-          className="rounded-xl shadow-lg"
-          allowFullScreen
-        ></iframe>
-
-        <div className="mt-3">
-          <h2 className="text-lg font-semibold">
-            {selectedVideo.title}
-          </h2>
-
-          <p className="text-gray-400 text-sm">
-            {selectedVideo.description}
-          </p>
-
-          <span className="text-xs bg-blue-600 px-2 py-1 rounded-full mt-2 inline-block">
-            {selectedVideo.tag}
-          </span>
-        </div>
-      </motion.div>
-
-      {/* VIDEO ROW */}
-      <div>
-        <h2 className="text-sm font-semibold mb-3">
-          Continue Learning
-        </h2>
-
-        <div className="flex gap-4 overflow-x-auto pb-2">
-
-          {videos.map((video, index) => {
-            const isActive = selectedVideo.url === video.url;
-
-            return (
-              <motion.div
-                key={index}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setSelectedVideo(video)}
-                className={`relative min-w-[220px] cursor-pointer ${
-                  isActive ? "border-2 border-blue-500" : ""
-                }`}
-              >
-                {/* THUMBNAIL */}
-                <img
-                  src={video.thumbnail}
-                  alt="thumbnail"
-                  className="rounded-lg"
-                />
-
-                {/* PLAY ICON */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-black/60 p-3 rounded-full">
-                    ▶️
-                  </div>
-                </div>
-
-                {/* NOW PLAYING */}
-                {isActive && (
-                  <span className="absolute top-2 left-2 text-xs bg-blue-600 px-2 py-1 rounded">
-                    Now Playing
-                  </span>
-                )}
-
-                {/* TITLE */}
-                <p className="text-sm mt-2">{video.title}</p>
-
-                {/* TAG */}
-                <span className="text-xs text-gray-400">
-                  {video.tag}
-                </span>
-              </motion.div>
-            );
-          })}
-
+              <div className="flex gap-5 overflow-x-auto scroll-smooth pb-4 scrollbar-hide">
+                {videos.map((video, index) => (
+                  <motion.button
+                    type="button"
+                    key={index}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.open(video.url, "_blank")}
+                    className="min-w-[280px] max-w-[280px] shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-white text-left shadow-md transition duration-300 ease-out hover:scale-105 hover:shadow-xl"
+                  >
+                    <div className="relative aspect-video w-full bg-slate-100">
+                      <img
+                        src={youtubeThumbnail(video.url)}
+                        alt={video.title}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="rounded-full bg-white/80 p-3 shadow-lg">
+                          ▶
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-3 pb-3 pt-2.5">
+                      <p className="text-sm font-semibold leading-snug text-slate-800">
+                        {video.title}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">YouTube</p>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </section>
+          </motion.div>
         </div>
       </div>
-
     </div>
+  );
+}
+
+export default function Videos() {
+  return (
+    <Suspense fallback={<SessionLoading />}>
+      <VideosContent />
+    </Suspense>
   );
 }

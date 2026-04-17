@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { AppProvider } from "./context/AppContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 export const metadata = {
   title: "NPCI Onboarding App",
@@ -14,26 +15,30 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-black text-white">
+      <body className="min-h-screen bg-background text-foreground antialiased">
 
-        {/* 🔔 GLOBAL TOAST */}
         <Toaster
           position="top-center"
           toastOptions={{
+            duration: 4000,
             style: {
-              background: "#111",
-              color: "#fff",
-              border: "1px solid rgba(255,255,255,0.1)",
-              padding: "10px 14px",
-              borderRadius: "10px",
+              background: "var(--color-surface-elevated)",
+              color: "var(--foreground)",
+              border: "1px solid var(--border-subtle)",
+              padding: "12px 16px",
+              borderRadius: "12px",
+              fontSize: "14px",
+              boxShadow: "0 12px 30px rgba(15,23,42,0.12)",
             },
           }}
         />
 
         {/* 🌐 GLOBAL STATE (VERY IMPORTANT) */}
-        <AppProvider>
-          {children}
-        </AppProvider>
+        <NotificationProvider>
+          <AppProvider>
+            {children}
+          </AppProvider>
+        </NotificationProvider>
 
       </body>
     </html>

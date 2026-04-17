@@ -1,104 +1,55 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { hasValidSessionUser } from "@/app/lib/session";
+
+const SPLASH_DURATION_S = 2;
 
 export default function Home() {
-  const [showAvatar, setShowAvatar] = useState(false);
   const router = useRouter();
+  const [skipSplash, setSkipSplash] = useState(false);
+  const redirectedRef = useRef(false);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowAvatar(true);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+  useLayoutEffect(() => {
+    if (typeof window === "undefined") return;
+    if (hasValidSessionUser()) {
+      setSkipSplash(true);
+      router.replace("/dashboard");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
   }, []);
 
-  return (
-    <div className="h-screen w-screen bg-black text-white overflow-hidden">
-      
-      <div className="relative w-full h-full flex items-center justify-center">
+  const goToLogin = () => {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+    router.replace("/login");
+  };
 
-        {/* LOGO */}
+  if (skipSplash) {
+    return <div className="min-h-screen bg-white" aria-hidden />;
+  }
+
+  return (
+    <div className="relative min-h-screen overflow-hidden bg-white text-slate-800">
+      <div className="flex min-h-screen items-center justify-center px-4">
         <motion.img
           src="/npci-logo.png"
           alt="NPCI Logo"
-          initial={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
+          className="h-24 w-24 object-contain"
+          initial={{ scale: 1, opacity: 1 }}
           animate={{
-            scale: [1, 1.8, 2.5],
-            opacity: showAvatar ? 0 : 1,
-            filter: showAvatar ? "blur(10px)" : "blur(0px)",
+            scale: [1, 2.5, 2.5],
+            opacity: [1, 1, 0],
           }}
           transition={{
-            duration: 2,
+            duration: SPLASH_DURATION_S,
+            times: [0, 0.72, 1],
             ease: "easeInOut",
           }}
-          className="w-48 h-48 object-contain absolute drop-shadow-[0_0_40px_#3b82f6]"
+          onAnimationComplete={goToLogin}
         />
-
-        {/* LIGHT FLASH */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: showAvatar ? 0.2 : 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute w-96 h-96 bg-white rounded-full blur-3xl"
-        />
-
-        {/* AVATAR CUTOUT (GAME STYLE) */}
-        <motion.img
-          src="/avatar.png"
-          alt="avatar"
-          initial={{ x: 300, opacity: 0, scale: 0.8 }}
-          animate={{
-            x: showAvatar ? 0 : 300,
-            opacity: showAvatar ? 1 : 0,
-            scale: showAvatar ? 1 : 0.8,
-          }}
-          transition={{
-            duration: 1,
-            ease: "easeOut",
-          }}
-          className="absolute bottom-0 right-10 h-[70%] object-contain"
-        />
-
-        {/* TEXT + CTA */}
-        {showAvatar && (
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="absolute left-10 bottom-20 max-w-md"
-          >
-            <h1 className="text-2xl font-semibold mb-2">
-              Hi Naman,
-            </h1>
-
-            <h2 className="text-lg text-blue-400 mb-3">
-              I’m Dilip Asbe
-            </h2>
-
-            <p className="text-gray-400 mb-4">
-              Welcome to NPCI — the backbone of India’s digital payments.
-            </p>
-
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="px-6 py-2 bg-blue-600 rounded-full hover:bg-blue-700 transition"
-            >
-              Begin Journey →
-            </button>
-            <button
-              onClick={() => router.push("/login")}
-              className="px-6 py-2 border border-white/30 rounded-full text-sm hover:bg-white hover:text-black transition"
-            >
-              Already have an account? Login
-            </button>
-          </motion.div>
-          
-        )}
-
       </div>
     </div>
   );

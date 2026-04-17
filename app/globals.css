@@ -2,25 +2,62 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
+  --muted: #6b7280;
+  --border-subtle: rgba(15, 23, 42, 0.1);
+  --base-surface: #f5f7fb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-muted: var(--muted);
+  --color-primary: #7c83f7;
+  --color-secondary: #4d92f7;
+  --color-surface: #f5f7fb;
+  --color-surface-elevated: #ffffff;
+  --color-border: #e5e7eb;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle premium gradient utility */
+.app-gradient-accent {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-primary) 85%, white) 0%,
+    color-mix(in srgb, var(--color-secondary) 75%, white) 100%
+  );
+}
+
+.app-gradient-text {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    color-mix(in srgb, var(--color-secondary) 90%, white) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.app-page-base {
+  background: var(--base-surface);
+}
+
+/* Horizontal carousels — hide scrollbar, keep scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

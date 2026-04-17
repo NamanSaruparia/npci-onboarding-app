@@ -1,26 +1,33 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define MONGODB_URI");
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: { conn: any; promise: any } | undefined;
 }
 
-let cached = (global as any).mongoose;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error("MONGODB_URI not defined");
+}
+
+let cached = global.mongoose;
 
 if (!cached) {
-  cached = (global as any).mongoose = { conn: null, promise: null };
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
 export async function connectDB() {
-  if (cached.conn) return cached.conn;
+  const dbCache = cached!;
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: "npci-app",
+  if (dbCache.conn) return dbCache.conn;
+
+  if (!dbCache.promise) {
+    dbCache.promise = mongoose.connect(MONGODB_URI, {
+      dbName: "npci-db",
     });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  dbCache.conn = await dbCache.promise;
+  return dbCache.conn;
 }

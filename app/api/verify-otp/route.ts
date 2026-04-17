@@ -6,19 +6,12 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { mobile } = await req.json();
+    const { mobile, otp } = await req.json();
     const cleanMobile = String(mobile ?? "").trim();
 
-    if (!cleanMobile) {
+    if (!cleanMobile || !otp || !isValidMobile(cleanMobile)) {
       return Response.json(
-        { message: "Mobile number is required." },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidMobile(cleanMobile)) {
-      return Response.json(
-        { message: "Enter a valid 10-digit mobile number." },
+        { message: "Mobile number and OTP are required." },
         { status: 400 }
       );
     }
@@ -32,25 +25,30 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!user.isVerified) {
-      return Response.json(
-        { message: "Verify OTP to continue." },
-        { status: 401 }
-      );
+    if (!user.otp || !user.otpExpiry) {
+      return Response.json({ message: "OTP not found. Request a new OTP." }, { status: 400 });
     }
+
+    if (new Date(user.otpExpiry).getTime() < Date.now()) {
+      return Response.json({ message: "OTP has expired. Please request again." }, { status: 400 });
+    }
+
+    if (user.otp !== String(otp).trim()) {
+      return Response.json({ message: "Invalid OTP." }, { status: 401 });
+    }
+
+    user.isVerified = true;
+    user.otp = "";
+    user.otpExpiry = undefined;
+    await user.save();
 
     return Response.json({
       success: true,
       user: {
         id: user._id,
-        name: user.name || "",
         mobile: user.mobile,
-        position: user.position || "",
-        location: user.location || "",
-        profileImageUrl: user.profileImageUrl || "",
-        uploadedDocs: user.uploadedDocs ?? 0,
-        isAllowed: user.isAllowed,
         isVerified: user.isVerified,
+        isAllowed: user.isAllowed,
       },
     });
   } catch (err) {
