@@ -308,7 +308,7 @@ export default function Dashboard() {
 
   const day1Cards: MiniCardItem[] = [
     { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon.") },
-    { title: "HR induction", emoji: "🏛️", onClick: () => toast("Coming soon.") },
+    { title: "HR induction", emoji: "🏛️", onClick: () => router.push("/learn/hr-induction") },
     { title: "Ready reckoner", emoji: "📘", onClick: () => router.push("/ready-reckoner") },
   ];
 
