@@ -144,10 +144,17 @@ export default function Documents() {
         }
         if (!res.ok || !data?.user) return;
 
+        const rawEntity = data.user.entity ?? "";
+        const entityOptions: UserProfile["entity"][] = [
+          "NPCI",
+          "NBBL",
+          "NBSL",
+          "NIPL",
+        ];
         const normalizedProfile: UserProfile = {
           employeeType: data.user.employeeType === "lateral" ? "lateral" : "fresher",
-          entity: ["NPCI", "NBBL", "NBSL", "NIPL"].includes(data.user.entity)
-            ? data.user.entity
+          entity: entityOptions.includes(rawEntity as UserProfile["entity"])
+            ? (rawEntity as UserProfile["entity"])
             : "NPCI",
           band: data.user.band === "B2" ? "B2" : "B1",
         };

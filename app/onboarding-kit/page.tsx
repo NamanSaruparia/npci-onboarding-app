@@ -112,8 +112,6 @@ export default function OnboardingKitPage() {
 
   const handleEdit = () => setMode("select");
 
-  const selectedItems = onboardingKitItems.filter((item) => selected.has(item.name));
-
   return (
     <div className="min-h-screen bg-white text-slate-800">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
@@ -215,7 +213,7 @@ export default function OnboardingKitPage() {
                       Kit confirmed
                     </p>
                     <p className="text-xs text-emerald-700">
-                      Your selections have been saved. We'll prepare your kit
+                      Your selections have been saved. We&apos;ll prepare your kit
                       for Day 1.
                     </p>
                   </div>

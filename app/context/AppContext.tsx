@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 
 type AppContextType = {
   uploadedDocs: number;
@@ -10,17 +10,13 @@ type AppContextType = {
 
 const AppContext = createContext<AppContextType | null>(null);
 
-export function AppProvider({ children }: any) {
-  const [uploadedDocs, setUploadedDocs] = useState(0);
-  const totalDocs = 15;
-
-  // 🔥 LOAD FROM LOCAL STORAGE
-  useEffect(() => {
+export function AppProvider({ children }: { children: ReactNode }) {
+  const [uploadedDocs, setUploadedDocs] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
     const saved = localStorage.getItem("uploadedDocs");
-    if (saved) {
-      setUploadedDocs(Number(saved));
-    }
-  }, []);
+    return saved ? Number(saved) : 0;
+  });
+  const totalDocs = 15;
 
   // 🔥 SAVE TO LOCAL STORAGE
   useEffect(() => {

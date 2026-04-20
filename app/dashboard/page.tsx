@@ -83,20 +83,28 @@ export default function Dashboard() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
   const uploadedDocsRef = useRef(uploadedDocs);
-  uploadedDocsRef.current = uploadedDocs;
+
+  useEffect(() => {
+    uploadedDocsRef.current = uploadedDocs;
+  }, [uploadedDocs]);
 
   useEffect(() => {
     if (preOnboardingProgress < 100) return;
-    setStageStatus((prev) => {
-      if (prev.pre !== "completed") {
-        return {
-          ...prev,
-          pre: "completed",
-          day1: prev.day1 === "locked" ? "active" : prev.day1,
-        };
-      }
-      return prev;
-    });
+
+    const timeoutId = window.setTimeout(() => {
+      setStageStatus((prev) => {
+        if (prev.pre !== "completed") {
+          return {
+            ...prev,
+            pre: "completed",
+            day1: prev.day1 === "locked" ? "active" : prev.day1,
+          };
+        }
+        return prev;
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [preOnboardingProgress]);
 
   useEffect(() => {

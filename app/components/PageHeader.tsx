@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { parseSessionUser } from "@/app/lib/session";
 import { useNotifications } from "@/app/context/NotificationContext";
 
@@ -11,29 +11,38 @@ type PageHeaderProps = {
   showProfile?: boolean;
 };
 
+type HeaderProfile = {
+  name: string;
+  position: string;
+  profileImageUrl: string;
+};
+
+const DEFAULT_PROFILE: HeaderProfile = {
+  name: "Anu Ramakrishnan",
+  position: "Head Transformation Planning & Design, HR CoE",
+  profileImageUrl: "/dashboard-profile.png",
+};
+
+function getInitialProfile(): HeaderProfile {
+  if (typeof window === "undefined") return DEFAULT_PROFILE;
+
+  const parsed = parseSessionUser(localStorage.getItem("user"));
+  if (!parsed?.mobile) return DEFAULT_PROFILE;
+
+  return {
+    name: parsed.name || parsed.mobile || DEFAULT_PROFILE.name,
+    position:
+      String(parsed.role || parsed.position || "").trim() ||
+      DEFAULT_PROFILE.position,
+    profileImageUrl: parsed.profileImageUrl || DEFAULT_PROFILE.profileImageUrl,
+  };
+}
+
 export function PageHeader({ title, subtitle, titleEmoji = "✨", showProfile = true }: PageHeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [profile, setProfile] = useState({
-    name: "Anu Ramakrishnan",
-    position: "Head Transformation Planning & Design, HR CoE",
-    profileImageUrl: "/dashboard-profile.png",
-  });
+  const [profile] = useState<HeaderProfile>(getInitialProfile);
 
   const { notifications, unreadCount, markAllRead } = useNotifications();
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const parsed = parseSessionUser(localStorage.getItem("user"));
-    if (!parsed?.mobile) return;
-
-    setProfile({
-      name: parsed.name || parsed.mobile || "Anu Ramakrishnan",
-      position:
-        String(parsed.role || parsed.position || "").trim() ||
-        "Head Transformation Planning & Design, HR CoE",
-      profileImageUrl: parsed.profileImageUrl || "/dashboard-profile.png",
-    });
-  }, []);
 
   return (
     <section className="mb-6 rounded-[24px] border border-slate-200 bg-white shadow-sm">

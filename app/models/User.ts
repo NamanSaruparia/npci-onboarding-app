@@ -1,5 +1,55 @@
 import mongoose from "mongoose";
 
+type DocStatus = "pending" | "approved" | "rejected";
+type EmployeeType = "fresher" | "lateral";
+type Entity = "NPCI" | "NBBL" | "NIPL" | "NBSL";
+type Band = "B1" | "B2";
+type Location = "Hyderabad" | "Mumbai" | "Chennai" | "";
+
+interface IUserDocument {
+  docId?: string;
+  name: string;
+  fileUrl?: string;
+  status: DocStatus;
+  uploadedAt?: Date;
+}
+
+interface IBuddyAnswer {
+  questionId: string;
+  answer: string;
+}
+
+interface ICheckInAnswers {
+  q1: number;
+  q2: number;
+  q3: number;
+  q4: string;
+  submittedAt?: Date;
+}
+
+export interface IUser {
+  name: string;
+  mobile: string;
+  position: string;
+  role: string;
+  location: Location;
+  profileImageUrl: string;
+  employeeType: EmployeeType;
+  entity: Entity;
+  band: Band;
+  reportingManager: string;
+  isAllowed: boolean;
+  isVerified: boolean;
+  otp: string;
+  otpExpiry?: Date;
+  documents: IUserDocument[];
+  uploadedDocs: number;
+  onboardingKit: string[];
+  buddyAnswers: IBuddyAnswer[];
+  isAdmin: boolean;
+  checkInAnswers: ICheckInAnswers | null;
+}
+
 const DocumentSchema = new mongoose.Schema(
   {
     docId: {
@@ -48,7 +98,7 @@ const CheckInAnswersSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new mongoose.Schema<IUser>({
   name: {
     type: String,
     trim: true,
@@ -141,7 +191,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 const ExistingUserModel = mongoose.models.User as
-  | mongoose.Model<unknown>
+  | mongoose.Model<IUser>
   | undefined;
 
 // In dev, hot reload may cache an older schema; recreate if any key path is missing.
@@ -160,5 +210,8 @@ if (
   delete (mongoose.models as Record<string, unknown>).User;
 }
 
-export default (mongoose.models.User as mongoose.Model<unknown>) ||
-  mongoose.model("User", UserSchema);
+const User =
+  (mongoose.models.User as mongoose.Model<IUser>) ||
+  mongoose.model<IUser>("User", UserSchema);
+
+export default User;
