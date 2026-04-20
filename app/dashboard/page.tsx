@@ -186,7 +186,6 @@ export default function Dashboard() {
       : "User";
   const roleLine = String(user.role || user.position || "").trim();
   const displayRole = roleLine || "\u2014";
-  const profileImageUrl = user.profileImageUrl || "/dashboard-profile.png";
 
   const notifications: string[] = [];
 
@@ -326,10 +325,9 @@ export default function Dashboard() {
         <section className="mb-4 rounded-[24px] border border-slate-200 bg-white shadow-sm">
           <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-4">
             <div className="flex min-w-0 items-center gap-3">
-              <img
-                src={profileImageUrl}
-                alt="Profile"
-                className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
+              <div
+                aria-hidden
+                className="h-11 w-11 rounded-full border border-slate-200 bg-white ring-1 ring-slate-200"
               />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-800">

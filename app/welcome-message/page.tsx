@@ -8,8 +8,8 @@ import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
 
 const AUDIO_SRC = "/welcome-audio.mp3";
-const AVATAR_SRC = "/nishit-avatar.png";
-const SPEAKER_NAME = "Nishit";
+const AVATAR_SRC = "/images/nishith.png";
+const SPEAKER_NAME = "Nishith Chaturvedi";
 
 function formatTime(seconds: number) {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";

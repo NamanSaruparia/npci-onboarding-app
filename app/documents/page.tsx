@@ -10,20 +10,72 @@ import { useRequireSession } from "../hooks/useRequireSession";
 import { useAppContext } from "../context/AppContext";
 import { useNotifications } from "../context/NotificationContext";
 import { parseSessionUser, type SessionUser } from "@/app/lib/session";
+import {
+  filterDocuments,
+  type DocumentItem,
+} from "@/app/lib/documentConfig";
 
 type BackendDocStatus = "pending" | "approved" | "rejected";
 
 type Doc = {
+  id: string;
   name: string;
   fileName?: string;
   fileUrl?: string;
   status: BackendDocStatus;
-  downloadLink?: string;
+  requiresDownload: boolean;
+  template: string;
+  templateInEntityFolder: boolean;
 };
 
 type Category = {
+  key: DocumentItem["category"];
   title: string;
   docs: Doc[];
+};
+
+type UserProfile = {
+  employeeType: "fresher" | "lateral";
+  entity: "NPCI" | "NBBL" | "NBSL" | "NIPL";
+  band: "B1" | "B2";
+};
+
+type UserDocRecord = {
+  docId?: string;
+  name: string;
+  fileUrl?: string;
+  status?: string;
+};
+
+type GetUserResponse = {
+  success?: boolean;
+  user?: {
+    employeeType?: string;
+    entity?: string;
+    band?: string;
+    documents?: UserDocRecord[];
+    uploadedDocs?: number;
+  };
+};
+
+type UploadResponse = {
+  success?: boolean;
+};
+
+const CATEGORY_ORDER: DocumentItem["category"][] = [
+  "education",
+  "identity",
+  "employment",
+  "other",
+  "legal",
+];
+
+const CATEGORY_TITLES: Record<DocumentItem["category"], string> = {
+  education: "Education",
+  identity: "Identity",
+  employment: "Employment",
+  other: "Other",
+  legal: "Legal",
 };
 
 function statusMeta(doc: Doc) {
@@ -65,68 +117,8 @@ export default function Documents() {
   const { uploadedDocs, setUploadedDocs, totalDocs } = useAppContext();
   const { addNotification } = useNotifications();
 
-  const [user, setUser] = useState<SessionUser | null>(null);
-
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      title: "Education",
-      docs: [
-        { name: "SSC Marksheet", status: "pending" },
-        { name: "HSC Marksheet", status: "pending" },
-        { name: "UG Certificates", status: "pending" },
-        { name: "PG Certificates (if any)", status: "pending" },
-        { name: "Other Certifications", status: "pending" },
-      ],
-    },
-    {
-      title: "Identity",
-      docs: [
-        { name: "Passport", status: "pending" },
-        { name: "Driving License", status: "pending" },
-        { name: "Voter ID", status: "pending" },
-        { name: "PAN & Aadhaar (Mandatory)", status: "pending" },
-        { name: "Address Proof", status: "pending" },
-      ],
-    },
-    {
-      title: "Mandatory NPCI",
-      docs: [
-        {
-          name: "Offer Letter (Download → Sign → Upload)",
-          status: "pending",
-          downloadLink: "/documents/offer-letter.pdf",
-        },
-        {
-          name: "NPCI Declaration (Download → Sign → Upload)",
-          status: "pending",
-          downloadLink: "/documents/npci-declaration.pdf",
-        },
-        {
-          name: "NPCI Form (Download → Sign → Upload)",
-          status: "pending",
-          downloadLink: "/documents/npci-form.pdf",
-        },
-        { name: "Cancelled Cheque", status: "pending" },
-        { name: "Resume", status: "pending" },
-      ],
-    },
-  ]);
-
-  useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser) as SessionUser;
-        setUser(parsed && typeof parsed === "object" ? parsed : null);
-      }
-    } catch {
-      setUser(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (sessionUser) setUser(sessionUser);
-  }, [sessionUser]);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     if (!ready) return;
@@ -142,9 +134,9 @@ export default function Documents() {
           body: JSON.stringify({ mobile }),
         });
         const text = await res.text();
-        let data: any;
+        let data: GetUserResponse;
         try {
-          data = JSON.parse(text);
+          data = JSON.parse(text) as GetUserResponse;
         } catch {
           console.error("RAW RESPONSE:", text);
           toast.error("Server crashed. Check terminal.");
@@ -152,27 +144,47 @@ export default function Documents() {
         }
         if (!res.ok || !data?.user) return;
 
-        const serverDocs = Array.isArray(data.user.documents)
-          ? data.user.documents
-          : [];
+        const normalizedProfile: UserProfile = {
+          employeeType: data.user.employeeType === "lateral" ? "lateral" : "fresher",
+          entity: ["NPCI", "NBBL", "NBSL", "NIPL"].includes(data.user.entity)
+            ? data.user.entity
+            : "NPCI",
+          band: data.user.band === "B2" ? "B2" : "B1",
+        };
+        setUserProfile(normalizedProfile);
 
-        setCategories((prev) =>
-          prev.map((category) => ({
-            ...category,
-            docs: category.docs.map((doc) => {
-              const saved = serverDocs.find(
-                (item: { name: string }) => item.name === doc.name
-              );
-              if (!saved) return doc;
-              return {
-                ...doc,
-                fileName: saved.fileUrl ? "Uploaded file" : undefined,
-                fileUrl: saved.fileUrl || undefined,
-                status: (saved.status || "pending") as BackendDocStatus,
-              };
-            }),
-          }))
-        );
+        const documents = filterDocuments(normalizedProfile);
+        const groupedDocs = documents.reduce((acc, doc) => {
+          if (!acc[doc.category]) acc[doc.category] = [];
+          acc[doc.category].push(doc);
+          return acc;
+        }, {} as Record<string, typeof documents>);
+
+        const serverDocs = Array.isArray(data.user.documents) ? data.user.documents : [];
+
+        const nextCategories: Category[] = CATEGORY_ORDER.filter(
+          (category) => groupedDocs[category]?.length
+        ).map((category) => ({
+          key: category,
+          title: CATEGORY_TITLES[category],
+          docs: groupedDocs[category].map((doc) => {
+            const saved = serverDocs.find(
+              (item) => item.docId === doc.id || item.name === doc.name
+            );
+            return {
+              id: doc.id,
+              name: doc.name,
+              template: doc.template,
+              templateInEntityFolder: Boolean(doc.condition?.entity),
+              requiresDownload: doc.requiresDownload,
+              fileName: saved?.fileUrl ? "Uploaded file" : undefined,
+              fileUrl: saved?.fileUrl || undefined,
+              status: (saved?.status || "pending") as BackendDocStatus,
+            };
+          }),
+        }));
+
+        setCategories(nextCategories);
 
         if (typeof data.user.uploadedDocs === "number") {
           setUploadedDocs(data.user.uploadedDocs);
@@ -206,10 +218,7 @@ export default function Documents() {
     if (!file) return;
 
     const latest = parseSessionUser(localStorage.getItem("user"));
-    const mobile = latest?.mobile ?? user?.mobile;
-
-    console.log("USER:", user);
-    console.log("FILE:", file);
+    const mobile = latest?.mobile ?? (sessionUser as SessionUser | null)?.mobile;
 
     if (!mobile) {
       alert("Session expired. Please login again.");
@@ -228,6 +237,7 @@ export default function Documents() {
     formData.append("file", file);
     formData.append("mobile", mobile);
     formData.append("documentName", docName);
+    formData.append("documentId", row?.id ?? docName);
 
     try {
       const res = await fetch("/api/update-docs", {
@@ -236,9 +246,9 @@ export default function Documents() {
       });
 
       const text = await res.text();
-      let data: any;
+      let data: UploadResponse;
       try {
-        data = JSON.parse(text);
+        data = JSON.parse(text) as UploadResponse;
       } catch {
         console.error("RAW RESPONSE:", text);
         toast.error("Server crashed. Check terminal.");
@@ -256,6 +266,28 @@ export default function Documents() {
       console.error("UPLOAD ERROR:", err);
       toast.error("Something went wrong. Please try again.");
     }
+  };
+
+  const handleDownload = (doc: Doc) => {
+    if (!doc.template) {
+      toast.error("Template not available");
+      return;
+    }
+    if (!userProfile) {
+      toast.error("User profile not loaded");
+      return;
+    }
+
+    const entity = userProfile.entity.toLowerCase();
+    const templateFile = encodeURIComponent(doc.template);
+    const fileUrl = doc.templateInEntityFolder
+      ? `/templates/${entity}/${templateFile}`
+      : `/templates/${templateFile}`;
+
+    const link = document.createElement("a");
+    link.href = fileUrl;
+    link.download = doc.template;
+    link.click();
   };
 
   const progress = Math.floor((uploadedDocs / totalDocs) * 100);
@@ -326,7 +358,7 @@ export default function Documents() {
           <div className="space-y-8">
             {categories.map((category, catIndex) => (
               <section
-                key={catIndex}
+                key={category.key}
                 className={`rounded-2xl p-4 ${
                   catIndex === 0
                     ? "bg-[#eef0ff]"
@@ -340,9 +372,9 @@ export default function Documents() {
                 </h2>
 
                 <ul className="space-y-3">
-                  {category.docs.map((doc, docIndex) => (
+                  {category.docs.map((doc) => (
                     <motion.li
-                      key={docIndex}
+                      key={doc.id}
                       whileHover={{ scale: 1.02 }}
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                       className="flex flex-col gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6"
@@ -366,15 +398,15 @@ export default function Documents() {
                       </div>
 
                       <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
-                        {doc.downloadLink && (
-                          <a
-                            href={doc.downloadLink}
-                            download
+                        {doc.requiresDownload && (
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(doc)}
                             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-xs font-medium text-slate-700 transition hover:border-gray-300"
                           >
                             <span className="text-base">⬇️</span>
                             Download
-                          </a>
+                          </button>
                         )}
 
                         <label

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { mobile, documentName, status } = await req.json();
+    const { mobile, docId, documentName, status } = await req.json();
     const cleanMobile = String(mobile ?? "").trim();
 
     if (!cleanMobile || !isValidMobile(cleanMobile)) {
@@ -20,9 +20,9 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!documentName || !["approved", "rejected"].includes(status)) {
+    if (!(docId || documentName) || !["approved", "rejected"].includes(status)) {
       return Response.json(
-        { message: "Document name and valid status are required." },
+        { message: "Document id/name and valid status are required." },
         { status: 400 }
       );
     }
@@ -33,8 +33,12 @@ export async function POST(req: Request) {
     }
 
     const docs = Array.isArray(user.documents) ? user.documents : [];
+    const normalizedDocId = String(docId ?? "").trim();
+    const normalizedDocName = String(documentName ?? "").trim();
     const idx = docs.findIndex(
-      (doc: { name: string }) => doc.name === documentName
+      (doc: { docId?: string; name: string }) =>
+        (normalizedDocId && doc.docId === normalizedDocId) ||
+        (normalizedDocName && doc.name === normalizedDocName)
     );
 
     if (idx < 0) {
@@ -58,7 +62,7 @@ export async function POST(req: Request) {
       sendUemApprovalNotification({
         employeeName: user.name || "Unknown",
         employeeMobile: user.mobile,
-        documentName,
+        documentName: docs[idx].name || normalizedDocName || normalizedDocId,
         approvedAt,
       }).catch((err: unknown) => {
         console.error("[Email] Failed to send UEM notification:", err);

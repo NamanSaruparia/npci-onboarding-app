@@ -2,6 +2,11 @@ import mongoose from "mongoose";
 
 const DocumentSchema = new mongoose.Schema(
   {
+    docId: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     name: {
       type: String,
       required: true,
@@ -74,6 +79,26 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  employeeType: {
+    type: String,
+    enum: ["fresher", "lateral"],
+    default: "fresher",
+  },
+  entity: {
+    type: String,
+    enum: ["NPCI", "NBBL", "NIPL", "NBSL"],
+    default: "NPCI",
+  },
+  band: {
+    type: String,
+    enum: ["B1", "B2"],
+    default: "B1",
+  },
+  reportingManager: {
+    type: String,
+    trim: true,
+    default: "",
+  },
   isAllowed: {
     type: Boolean,
     default: false,
@@ -115,18 +140,25 @@ const UserSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-const ExistingUserModel = mongoose.models.User as mongoose.Model<any> | undefined;
+const ExistingUserModel = mongoose.models.User as
+  | mongoose.Model<unknown>
+  | undefined;
 
 // In dev, hot reload may cache an older schema; recreate if any key path is missing.
 if (
   ExistingUserModel &&
   (!ExistingUserModel.schema.path("documents") ||
+    !ExistingUserModel.schema.path("documents.docId") ||
     !ExistingUserModel.schema.path("buddyAnswers") ||
     !ExistingUserModel.schema.path("checkInAnswers") ||
-    !ExistingUserModel.schema.path("isAdmin"))
+    !ExistingUserModel.schema.path("isAdmin") ||
+    !ExistingUserModel.schema.path("employeeType") ||
+    !ExistingUserModel.schema.path("entity") ||
+    !ExistingUserModel.schema.path("band") ||
+    !ExistingUserModel.schema.path("reportingManager"))
 ) {
   delete (mongoose.models as Record<string, unknown>).User;
 }
 
-export default (mongoose.models.User as mongoose.Model<any>) ||
+export default (mongoose.models.User as mongoose.Model<unknown>) ||
   mongoose.model("User", UserSchema);

@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     const mobile = formData.get("mobile")?.toString();
     const file = formData.get("file") as File;
     const documentName = formData.get("documentName")?.toString();
+    const documentId = formData.get("documentId")?.toString();
 
     console.log("Uploading file:", file?.name);
     console.log("Mobile:", mobile);
@@ -50,11 +51,34 @@ export async function POST(req: Request) {
 
     user.documents = user.documents || [];
 
-    user.documents.push({
-      name: documentName,
-      fileUrl,
-      status: "pending",
-    });
+    const normalizedDocId = documentId || documentName;
+    const existingDocIndex = user.documents.findIndex(
+      (doc: { docId?: string; name?: string }) =>
+        (doc.docId && doc.docId === normalizedDocId) || doc.name === documentName
+    );
+
+    if (existingDocIndex >= 0) {
+      user.documents[existingDocIndex] = {
+        ...user.documents[existingDocIndex],
+        docId: normalizedDocId,
+        name: documentName,
+        fileUrl,
+        status: "pending",
+        uploadedAt: new Date(),
+      };
+    } else {
+      user.documents.push({
+        docId: normalizedDocId,
+        name: documentName,
+        fileUrl,
+        status: "pending",
+        uploadedAt: new Date(),
+      });
+    }
+
+    user.uploadedDocs = user.documents.filter(
+      (doc: { fileUrl?: string }) => Boolean(doc.fileUrl)
+    ).length;
 
     await user.save();
 

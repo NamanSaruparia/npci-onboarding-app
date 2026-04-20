@@ -46,7 +46,7 @@ export default function WelcomePage() {
             <div className="flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
               <div className="max-w-xl space-y-4">
                 <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                  Hi {greetingName}, I&apos;m Dilip Asbe
+                  Hi {greetingName}, I&apos;m Nishith Chaturvedi
                 </h1>
                 <p className="text-sm leading-relaxed text-gray-500 sm:text-base">
                   Welcome to NPCI — let&apos;s begin your onboarding journey
@@ -61,8 +61,8 @@ export default function WelcomePage() {
               </div>
 
               <motion.img
-                src="/avatar.png"
-                alt="Dilip Asbe"
+                src="/images/nishith.png"
+                alt="Nishith Chaturvedi"
                 initial={{ opacity: 0, scale: 0.92 }}
                 animate={{
                   opacity: showAvatar ? 1 : 0,

@@ -9,7 +9,17 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { mobile, name, position, location, profileImageUrl } = await req.json();
+    const {
+      mobile,
+      name,
+      position,
+      location,
+      profileImageUrl,
+      employeeType,
+      entity,
+      band,
+      reportingManager,
+    } = await req.json();
     const cleanMobile = String(mobile ?? "").trim();
 
     if (!cleanMobile || !isValidMobile(cleanMobile)) {
@@ -32,6 +42,12 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+    if (!reportingManager || !String(reportingManager).trim()) {
+      return Response.json(
+        { message: "Reporting manager is required." },
+        { status: 400 }
+      );
+    }
 
     const allowedLocations = ["Hyderabad", "Mumbai", "Chennai"];
     if (!location || !allowedLocations.includes(location)) {
@@ -41,29 +57,53 @@ export async function POST(req: Request) {
       );
     }
 
-    const existing = await User.findOne({ mobile: cleanMobile });
-
-    if (existing) {
+    const allowedEmployeeTypes = ["fresher", "lateral"];
+    if (!allowedEmployeeTypes.includes(String(employeeType ?? ""))) {
       return Response.json(
-        { message: "User already exists." },
-        { status: 409 }
+        { message: "Select a valid employee type." },
+        { status: 400 }
+      );
+    }
+
+    const allowedEntities = ["NPCI", "NBBL", "NIPL", "NBSL"];
+    if (!allowedEntities.includes(String(entity ?? ""))) {
+      return Response.json(
+        { message: "Select a valid entity." },
+        { status: 400 }
+      );
+    }
+
+    const allowedBands = ["B1", "B2"];
+    if (!allowedBands.includes(String(band ?? ""))) {
+      return Response.json(
+        { message: "Select a valid band." },
+        { status: 400 }
       );
     }
 
     const positionTrimmed = String(position).trim();
 
-    const user = await User.create({
-      name: String(name).trim(),
-      mobile: cleanMobile,
-      position: positionTrimmed,
-      role: positionTrimmed,
-      location,
-      profileImageUrl: profileImageUrl || "",
-      isAllowed: true,
-      isVerified: false,
-      uploadedDocs: 0,
-      otp: "",
-    });
+    const user = await User.findOneAndUpdate(
+      { mobile: cleanMobile },
+      {
+        mobile: cleanMobile,
+        name: String(name).trim(),
+        position: positionTrimmed,
+        role: positionTrimmed,
+        location,
+        profileImageUrl: profileImageUrl || "",
+        employeeType: String(employeeType),
+        entity: String(entity),
+        band: String(band),
+        reportingManager: String(reportingManager).trim(),
+        isAllowed: true,
+      },
+      {
+        upsert: true,
+        new: true,
+        setDefaultsOnInsert: true,
+      }
+    );
 
     return Response.json({
       success: true,
@@ -75,6 +115,10 @@ export async function POST(req: Request) {
         role: user.role,
         location: user.location,
         profileImageUrl: user.profileImageUrl,
+        employeeType: user.employeeType,
+        entity: user.entity,
+        band: user.band,
+        reportingManager: user.reportingManager,
         isAllowed: user.isAllowed,
         isVerified: user.isVerified,
         uploadedDocs: user.uploadedDocs,

@@ -11,13 +11,18 @@ type AdminUser = {
   name?: string;
   mobile: string;
   position?: string;
+  reportingManager?: string;
   location?: string;
+  employeeType?: "fresher" | "lateral";
+  entity?: "NPCI" | "NBBL" | "NIPL" | "NBSL";
+  band?: "B1" | "B2";
   profileImageUrl?: string;
   isAllowed: boolean;
   isVerified: boolean;
   isAdmin?: boolean;
   uploadedDocs: number;
   documents?: {
+    docId?: string;
     name: string;
     fileUrl: string;
     status: "pending" | "approved" | "rejected";
@@ -91,11 +96,16 @@ export default function AdminPage() {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [position, setPosition] = useState("");
+  const [reportingManager, setReportingManager] = useState("");
   const [location, setLocation] = useState<(typeof locations)[number]>("Hyderabad");
+  const [employeeType, setEmployeeType] = useState<"" | "fresher" | "lateral">("");
+  const [entity, setEntity] = useState<"" | "NPCI" | "NBBL" | "NIPL" | "NBSL">("");
+  const [band, setBand] = useState<"" | "B1" | "B2">("");
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [busyMobile, setBusyMobile] = useState<string | null>(null);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
   const [expandedTab, setExpandedTab] = useState<"docs" | "buddy" | "checkin" | "kit">("docs");
@@ -130,12 +140,28 @@ export default function AdminPage() {
       toast.error("Enter a valid 10-digit mobile number.");
       return;
     }
-    if (!name.trim()) {
+    if (!editingUser && !name.trim()) {
       toast.error("Enter user name.");
       return;
     }
-    if (!position.trim()) {
+    if (!editingUser && !position.trim()) {
       toast.error("Enter position.");
+      return;
+    }
+    if (!editingUser && !reportingManager.trim()) {
+      toast.error("Enter reporting manager.");
+      return;
+    }
+    if (!employeeType) {
+      toast.error("Select employee type.");
+      return;
+    }
+    if (!entity) {
+      toast.error("Select entity.");
+      return;
+    }
+    if (!band) {
+      toast.error("Select band level.");
       return;
     }
 
@@ -154,35 +180,68 @@ export default function AdminPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/add-user", {
+      const url = editingUser ? "/api/admin/update-user" : "/api/admin/add-user";
+      const payload = editingUser
+        ? {
+            mobile: normalized,
+            employeeType,
+            entity,
+            band,
+          }
+        : {
+            name: name.trim(),
+            mobile: normalized,
+            position: position.trim(),
+            reportingManager: reportingManager.trim(),
+            location,
+            employeeType,
+            entity,
+            band,
+            profileImageUrl,
+          };
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          mobile: normalized,
-          position: position.trim(),
-          location,
-          profileImageUrl,
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.message || "Unable to add user.");
+        toast.error(data?.message || (editingUser ? "Unable to update user." : "Unable to add user."));
         return;
       }
 
       setName("");
       setMobile("");
       setPosition("");
+      setReportingManager("");
       setLocation("Hyderabad");
+      setEmployeeType("");
+      setEntity("");
+      setBand("");
       setProfileImageFile(null);
-      toast.success("User added and allowed for onboarding.");
+      setEditingUser(null);
+      toast.success(editingUser ? "User updated successfully." : "User added and allowed for onboarding.");
       await fetchUsers();
     } catch {
       toast.error("Network error while adding user.");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleEditUser = (user: AdminUser) => {
+    setEditingUser(user);
+    setName(user.name || "");
+    setMobile(user.mobile || "");
+    setPosition(user.position || "");
+    setReportingManager(user.reportingManager || "");
+    setLocation(
+      (user.location as (typeof locations)[number]) || "Hyderabad"
+    );
+    setEmployeeType(user.employeeType || "fresher");
+    setEntity(user.entity || "NPCI");
+    setBand(user.band || "B1");
   };
 
   const handleToggle = async (targetMobile: string) => {
@@ -231,7 +290,7 @@ export default function AdminPage() {
 
   const handleDocStatus = async (
     mobileNo: string,
-    documentName: string,
+    docId: string,
     status: "approved" | "rejected"
   ) => {
     setBusyMobile(mobileNo);
@@ -239,7 +298,7 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/update-doc-status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mobile: mobileNo, documentName, status }),
+        body: JSON.stringify({ mobile: mobileNo, docId, status }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -307,6 +366,7 @@ export default function AdminPage() {
               placeholder="Enter mobile number"
               value={mobile}
               onChange={(e) => setMobile(normalizeMobile(e.target.value))}
+              readOnly={Boolean(editingUser)}
               className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-primary/45 focus:bg-background"
             />
             <input
@@ -314,6 +374,13 @@ export default function AdminPage() {
               placeholder="Enter position"
               value={position}
               onChange={(e) => setPosition(e.target.value)}
+              className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-primary/45 focus:bg-background"
+            />
+            <input
+              type="text"
+              placeholder="Reporting manager"
+              value={reportingManager}
+              onChange={(e) => setReportingManager(e.target.value)}
               className="w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-primary/45 focus:bg-background"
             />
             <select
@@ -326,6 +393,45 @@ export default function AdminPage() {
                   {loc}
                 </option>
               ))}
+            </select>
+            <select
+              value={employeeType}
+              onChange={(e) =>
+                setEmployeeType(e.target.value as "" | "fresher" | "lateral")
+              }
+              className={`w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition focus:border-primary/45 focus:bg-background ${
+                employeeType ? "text-foreground" : "text-muted/70"
+              }`}
+            >
+              <option value="">Employee Type</option>
+              <option value="fresher">Fresher</option>
+              <option value="lateral">Lateral</option>
+            </select>
+            <select
+              value={entity}
+              onChange={(e) =>
+                setEntity(e.target.value as "" | "NPCI" | "NBBL" | "NIPL" | "NBSL")
+              }
+              className={`w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition focus:border-primary/45 focus:bg-background ${
+                entity ? "text-foreground" : "text-muted/70"
+              }`}
+            >
+              <option value="">Entity</option>
+              <option value="NPCI">NPCI</option>
+              <option value="NBBL">NBBL</option>
+              <option value="NIPL">NIPL</option>
+              <option value="NBSL">NBSL</option>
+            </select>
+            <select
+              value={band}
+              onChange={(e) => setBand(e.target.value as "" | "B1" | "B2")}
+              className={`w-full rounded-xl border border-border bg-background/60 px-4 py-3 text-sm outline-none transition focus:border-primary/45 focus:bg-background ${
+                band ? "text-foreground" : "text-muted/70"
+              }`}
+            >
+              <option value="">Band Level</option>
+              <option value="B1">B1 &amp; Below</option>
+              <option value="B2">B2 &amp; Above</option>
             </select>
             <label className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-border bg-background/60 px-4 py-3 text-sm text-muted transition hover:border-primary/45">
               <span className="truncate">
@@ -344,8 +450,28 @@ export default function AdminPage() {
               disabled={submitting}
               className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary to-secondary px-5 py-3 text-sm font-semibold text-background shadow-lg shadow-black/25 transition disabled:opacity-60"
             >
-              {submitting ? "Adding..." : "Add User"}
+              {submitting ? (editingUser ? "Updating..." : "Adding...") : (editingUser ? "Update User" : "Add User")}
             </button>
+            {editingUser ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingUser(null);
+                  setName("");
+                  setMobile("");
+                  setPosition("");
+                  setReportingManager("");
+                  setLocation("Hyderabad");
+                  setEmployeeType("");
+                  setEntity("");
+                  setBand("");
+                  setProfileImageFile(null);
+                }}
+                className="rounded-xl border border-border bg-background/60 px-5 py-3 text-sm font-semibold text-foreground transition hover:border-primary/45"
+              >
+                Cancel Edit
+              </button>
+            ) : null}
           </form>
         </motion.section>
 
@@ -551,6 +677,13 @@ export default function AdminPage() {
                             <div className="flex flex-wrap justify-end gap-2">
                               <button
                                 type="button"
+                                onClick={() => handleEditUser(user)}
+                                className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-500/15"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => {
                                   if (isExpanded && expandedTab === "docs") {
                                     setExpandedMobile(null);
@@ -683,7 +816,7 @@ export default function AdminPage() {
                                             onClick={() =>
                                               void handleDocStatus(
                                                 user.mobile,
-                                                doc.name,
+                                                doc.docId || doc.name,
                                                 "approved"
                                               )
                                             }
@@ -697,7 +830,7 @@ export default function AdminPage() {
                                             onClick={() =>
                                               void handleDocStatus(
                                                 user.mobile,
-                                                doc.name,
+                                                doc.docId || doc.name,
                                                 "rejected"
                                               )
                                             }

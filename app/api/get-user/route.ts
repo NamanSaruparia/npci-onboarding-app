@@ -14,7 +14,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = await User.findOne({ mobile });
+    const user = await User.findOne({ mobile }).select(
+      "mobile employeeType entity band reportingManager documents uploadedDocs name position location profileImageUrl isAllowed isVerified"
+    );
+
+    if (!user) {
+      return Response.json(
+        { success: false, message: "User not found" },
+        { status: 404 }
+      );
+    }
 
     return Response.json({ success: true, user });
   } catch (err) {
