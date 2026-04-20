@@ -132,6 +132,43 @@ export const DOCUMENTS: DocumentItem[] = [
     condition: { entity: "NIPL" },
   },
 
+  // OTHER DOCUMENTS (UPLOAD ONLY)
+  {
+    id: "cancelled_cheque",
+    name: "Cancelled Cheque",
+    category: "other",
+    requiresDownload: false,
+    template: "",
+  },
+  {
+    id: "bank_passbook",
+    name: "Bank Passbook Copy",
+    category: "other",
+    requiresDownload: false,
+    template: "",
+  },
+  {
+    id: "resume",
+    name: "Resume (Submitted during Interview)",
+    category: "other",
+    requiresDownload: false,
+    template: "",
+  },
+  {
+    id: "cibil",
+    name: "Latest CIBIL Report",
+    category: "other",
+    requiresDownload: false,
+    template: "",
+  },
+  {
+    id: "photo",
+    name: "Passport Size Photographs",
+    category: "other",
+    requiresDownload: false,
+    template: "",
+  },
+
   // UNDERTAKINGS (DOWNLOAD + SIGN + UPLOAD, BAND BASED)
   {
     id: "undertaking_b1",
