@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
@@ -64,34 +65,40 @@ function VideosContent() {
               </h2>
 
               <div className="flex gap-5 overflow-x-auto scroll-smooth pb-4 scrollbar-hide">
-                {videos.map((video, index) => (
-                  <motion.button
-                    type="button"
-                    key={index}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => window.open(video.url, "_blank")}
-                    className="min-w-[280px] max-w-[280px] shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-white text-left shadow-md transition duration-300 ease-out hover:scale-105 hover:shadow-xl"
-                  >
-                    <div className="relative aspect-video w-full bg-slate-100">
-                      <img
-                        src={youtubeThumbnail(video.url)}
-                        alt={video.title}
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="rounded-full bg-white/80 p-3 shadow-lg">
-                          ▶
+                {videos.map((video, index) => {
+                  const thumbnail = youtubeThumbnail(video.url) || "/npci-logo.png";
+                  return (
+                    <motion.button
+                      type="button"
+                      key={index}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => window.open(video.url, "_blank")}
+                      className="min-w-[280px] max-w-[280px] shrink-0 cursor-pointer overflow-hidden rounded-2xl bg-white text-left shadow-md transition duration-300 ease-out hover:scale-105 hover:shadow-xl"
+                    >
+                      <div className="relative aspect-video w-full bg-slate-100">
+                        <Image
+                          src={thumbnail}
+                          alt={video.title}
+                          fill
+                          sizes="280px"
+                          unoptimized
+                          className="h-full w-full object-cover"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="rounded-full bg-white/80 p-3 shadow-lg">
+                            ▶
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="px-3 pb-3 pt-2.5">
-                      <p className="text-sm font-semibold leading-snug text-slate-800">
-                        {video.title}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">YouTube</p>
-                    </div>
-                  </motion.button>
-                ))}
+                      <div className="px-3 pb-3 pt-2.5">
+                        <p className="text-sm font-semibold leading-snug text-slate-800">
+                          {video.title}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-slate-500">YouTube</p>
+                      </div>
+                    </motion.button>
+                  );
+                })}
               </div>
             </section>
           </motion.div>

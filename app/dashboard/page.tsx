@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
@@ -462,9 +463,11 @@ export default function Dashboard() {
               </div>
 
               <div className="flex shrink-0 items-center justify-center">
-                <img
+                <Image
                   src="/npci-logo.png"
                   alt="NPCI"
+                  width={96}
+                  height={96}
                   className="h-20 w-20 object-contain opacity-95 sm:h-24 sm:w-24"
                 />
               </div>

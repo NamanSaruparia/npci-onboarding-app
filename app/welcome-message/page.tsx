@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PageHeader } from "../components/PageHeader";
@@ -158,9 +159,11 @@ export default function WelcomeMessagePage() {
                         : "shadow-xl shadow-slate-200/80 ring-1 ring-slate-200/80",
                     ].join(" ")}
                   >
-                    <img
+                    <Image
                       src={AVATAR_SRC}
                       alt={SPEAKER_NAME}
+                      width={192}
+                      height={192}
                       className="relative z-10 h-40 w-40 rounded-full object-cover sm:h-48 sm:w-48"
                     />
                   </div>

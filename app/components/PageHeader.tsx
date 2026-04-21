@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { parseSessionUser } from "@/app/lib/session";
 import { useNotifications } from "@/app/context/NotificationContext";
 
@@ -49,9 +50,11 @@ export function PageHeader({ title, subtitle, titleEmoji = "✨", showProfile = 
       {showProfile && (
         <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <img
+            <Image
               src={profile.profileImageUrl}
               alt="Profile"
+              width={44}
+              height={44}
               className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
             />
             <div className="min-w-0">

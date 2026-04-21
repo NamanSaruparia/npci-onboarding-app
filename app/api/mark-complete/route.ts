@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     console.log("Module completed:", body.module);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ success: false });
   }
 }
