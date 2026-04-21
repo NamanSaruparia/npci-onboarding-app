@@ -10,7 +10,6 @@
     "fix-mobiles": "npx tsx scripts/fixMobiles.ts"
   },
   "dependencies": {
-    "@vercel/blob": "^2.3.3",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
     "mongoose": "^9.4.1",

@@ -1,9 +1,7 @@
 export const runtime = "nodejs";
 
-import fs from "node:fs";
-import path from "node:path";
-import { put } from "@vercel/blob";
 import { connectDB } from "@/app/lib/mongodb";
+import { deleteFromGridFS, uploadToGridFS } from "@/app/lib/gridfs";
 import User from "@/app/models/User";
 
 export async function POST(req: Request) {
@@ -27,40 +25,8 @@ export async function POST(req: Request) {
     }
 
     const timestampedName = `${Date.now()}-${file.name}`;
-    let fileUrl = "";
-
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      const blob = await put(
-        `documents/${mobile}/${timestampedName}`,
-        file,
-        {
-          access: "public",
-        }
-      );
-      fileUrl = blob.url;
-    } else if (process.env.VERCEL) {
-      // Vercel runtime should always use Blob storage.
-      return Response.json(
-        {
-          success: false,
-          message: "File storage is not configured. Missing BLOB_READ_WRITE_TOKEN.",
-        },
-        { status: 500 }
-      );
-    } else {
-      // Local/dev fallback so uploads continue to work without Blob token.
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const uploadDir = path.join(process.cwd(), "public/uploads");
-
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      const filePath = path.join(uploadDir, timestampedName);
-      fs.writeFileSync(filePath, buffer);
-      fileUrl = `/uploads/${timestampedName}`;
-    }
+    const fileId = await uploadToGridFS(file, timestampedName);
+    const fileUrl = `/api/documents/file/${encodeURIComponent(fileId)}`;
 
     const user = await User.findOne({ mobile });
 
@@ -80,18 +46,22 @@ export async function POST(req: Request) {
     );
 
     if (existingDocIndex >= 0) {
+      const previousFileId = user.documents[existingDocIndex]?.fileId;
       user.documents[existingDocIndex] = {
         ...user.documents[existingDocIndex],
         docId: normalizedDocId,
         name: documentName,
+        fileId,
         fileUrl,
         status: "pending",
         uploadedAt: new Date(),
       };
+      void deleteFromGridFS(previousFileId);
     } else {
       user.documents.push({
         docId: normalizedDocId,
         name: documentName,
+        fileId,
         fileUrl,
         status: "pending",
         uploadedAt: new Date(),
@@ -99,7 +69,8 @@ export async function POST(req: Request) {
     }
 
     user.uploadedDocs = user.documents.filter(
-      (doc: { fileUrl?: string }) => Boolean(doc.fileUrl)
+      (doc: { fileUrl?: string; fileId?: string }) =>
+        Boolean(doc.fileId || doc.fileUrl)
     ).length;
 
     await user.save();

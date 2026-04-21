@@ -10,6 +10,7 @@ interface IUserDocument {
   docId?: string;
   name: string;
   fileUrl?: string;
+  fileId?: string;
   status: DocStatus;
   uploadedAt?: Date;
 }
@@ -63,6 +64,10 @@ const DocumentSchema = new mongoose.Schema(
       trim: true,
     },
     fileUrl: {
+      type: String,
+      default: "",
+    },
+    fileId: {
       type: String,
       default: "",
     },
@@ -199,6 +204,7 @@ if (
   ExistingUserModel &&
   (!ExistingUserModel.schema.path("documents") ||
     !ExistingUserModel.schema.path("documents.docId") ||
+    !ExistingUserModel.schema.path("documents.fileId") ||
     !ExistingUserModel.schema.path("buddyAnswers") ||
     !ExistingUserModel.schema.path("checkInAnswers") ||
     !ExistingUserModel.schema.path("isAdmin") ||

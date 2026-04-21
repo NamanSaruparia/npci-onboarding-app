@@ -20,6 +20,7 @@ type BackendDocStatus = "pending" | "approved" | "rejected";
 type Doc = {
   id: string;
   name: string;
+  fileId?: string;
   fileName?: string;
   fileUrl?: string;
   status: BackendDocStatus;
@@ -43,6 +44,7 @@ type UserProfile = {
 type UserDocRecord = {
   docId?: string;
   name: string;
+  fileId?: string;
   fileUrl?: string;
   status?: string;
 };
@@ -60,6 +62,8 @@ type GetUserResponse = {
 
 type UploadResponse = {
   success?: boolean;
+  fileId?: string;
+  fileUrl?: string;
 };
 
 const CATEGORY_ORDER: DocumentItem["category"][] = [
@@ -185,6 +189,7 @@ export default function Documents() {
               templateInEntityFolder: Boolean(doc.condition?.entity),
               requiresDownload: doc.requiresDownload,
               fileName: saved?.fileUrl ? "Uploaded file" : undefined,
+              fileId: saved?.fileId || undefined,
               fileUrl: saved?.fileUrl || undefined,
               status: (saved?.status || "pending") as BackendDocStatus,
             };

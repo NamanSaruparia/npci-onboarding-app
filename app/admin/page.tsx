@@ -24,8 +24,9 @@ type AdminUser = {
   uploadedDocs: number;
   documents?: {
     docId?: string;
+    fileId?: string;
     name: string;
-    fileUrl: string;
+    fileUrl?: string;
     status: "pending" | "approved" | "rejected";
     uploadedAt?: string;
   }[];
@@ -774,6 +775,15 @@ export default function AdminPage() {
                                 ) : (
                                   <div className="grid gap-2.5">
                                     {docs.map((doc) => (
+                                      (() => {
+                                        const hasFile = Boolean(doc.fileId || doc.fileUrl);
+                                        const previewUrl = doc.fileId
+                                          ? `/api/documents/file/${encodeURIComponent(doc.fileId)}`
+                                          : doc.fileUrl || "";
+                                        const downloadUrl = doc.fileId
+                                          ? `/api/documents/file/${encodeURIComponent(doc.fileId)}?download=1`
+                                          : doc.fileUrl || "";
+                                        return (
                                       <div
                                         key={`${user.mobile}-${doc.name}`}
                                         className="rounded-lg border border-border/60 bg-background/40 p-2.5"
@@ -802,15 +812,16 @@ export default function AdminPage() {
                                         <div className="mt-2 flex flex-wrap gap-1.5">
                                           <button
                                             type="button"
-                                            disabled={!doc.fileUrl}
-                                            onClick={() => window.open(doc.fileUrl, "_blank")}
+                                            disabled={!hasFile}
+                                            onClick={() => window.open(previewUrl, "_blank")}
                                             className="rounded-md border border-border bg-background/60 px-2 py-1 text-[10px] font-semibold text-foreground transition hover:border-primary/50 disabled:opacity-50"
                                           >
                                             👁 Preview
                                           </button>
                                           <a
-                                            href={doc.fileUrl}
+                                            href={downloadUrl}
                                             download
+                                            aria-disabled={!hasFile}
                                             className="rounded-md border border-border bg-background/60 px-2 py-1 text-[10px] font-semibold text-foreground transition hover:border-primary/50"
                                           >
                                             ⬇ Download
@@ -845,6 +856,8 @@ export default function AdminPage() {
                                           </button>
                                         </div>
                                       </div>
+                                        );
+                                      })()
                                     ))}
                                   </div>
                                 )
