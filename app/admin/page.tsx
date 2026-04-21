@@ -683,7 +683,7 @@ export default function AdminPage() {
                               <button
                                 type="button"
                                 onClick={() => handleEditUser(user)}
-                                className="rounded-lg border border-blue-400/30 bg-blue-500/10 px-3 py-1.5 text-xs font-semibold text-blue-200 transition hover:bg-blue-500/15"
+                                className="rounded-lg border border-blue-300 bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 transition hover:bg-blue-200"
                               >
                                 Edit
                               </button>
@@ -711,7 +711,7 @@ export default function AdminPage() {
                                     setExpandedTab("buddy");
                                   }
                                 }}
-                                className="rounded-lg border border-violet-400/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-200 transition hover:bg-violet-500/15"
+                                className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-200"
                               >
                                 {isExpanded && expandedTab === "buddy" ? "Hide Insights" : "Buddy Insights"}
                               </button>
@@ -725,7 +725,7 @@ export default function AdminPage() {
                                     setExpandedTab("checkin");
                                   }
                                 }}
-                                className="rounded-lg border border-teal-400/30 bg-teal-500/10 px-3 py-1.5 text-xs font-semibold text-teal-200 transition hover:bg-teal-500/15"
+                                className="rounded-lg border border-teal-300 bg-teal-100 px-3 py-1.5 text-xs font-semibold text-teal-700 transition hover:bg-teal-200"
                               >
                                 {isExpanded && expandedTab === "checkin" ? "Hide Check-In" : "Check-In"}
                               </button>
@@ -739,7 +739,7 @@ export default function AdminPage() {
                                     setExpandedTab("kit");
                                   }
                                 }}
-                                className="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition hover:bg-amber-500/15"
+                                className="rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200"
                               >
                                 {isExpanded && expandedTab === "kit" ? "Hide Kit" : "🎁 Kit"}
                               </button>
@@ -755,7 +755,7 @@ export default function AdminPage() {
                                 type="button"
                                 disabled={rowBusy}
                                 onClick={() => void handleDelete(user.mobile)}
-                                className="rounded-lg border border-rose-400/25 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/15 disabled:opacity-60"
+                                className="rounded-lg border border-rose-300 bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-200 disabled:opacity-60"
                               >
                                 Delete
                               </button>

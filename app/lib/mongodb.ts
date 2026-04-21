@@ -6,24 +6,41 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI is not defined");
 }
 
-let cached = (global as any).mongoose;
+type MongooseCache = {
+  conn: mongoose.Mongoose | null;
+  promise: Promise<mongoose.Mongoose> | null;
+};
+
+declare global {
+  var mongooseCache: MongooseCache | undefined;
+}
+
+let cached = global.mongooseCache;
 
 if (!cached) {
-  cached = (global as any).mongoose = {
+  cached = global.mongooseCache = {
     conn: null,
     promise: null,
   };
 }
 
 export async function connectDB() {
-  if (cached.conn) return cached.conn;
+  const dbCache =
+    cached ??
+    (global.mongooseCache = {
+      conn: null,
+      promise: null,
+    });
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+  if (dbCache.conn) return dbCache.conn;
+
+  if (!dbCache.promise) {
+    dbCache.promise = mongoose.connect(MONGODB_URI, {
       dbName: "npci-db",
     });
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  dbCache.conn = await dbCache.promise;
+  cached = dbCache;
+  return dbCache.conn;
 }

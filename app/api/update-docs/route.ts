@@ -1,7 +1,6 @@
 export const runtime = "nodejs";
 
-import fs from "fs";
-import path from "path";
+import { put } from "@vercel/blob";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/models/User";
 
@@ -25,20 +24,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    const uploadDir = path.join(process.cwd(), "public/uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return Response.json(
+        {
+          success: false,
+          message: "File storage is not configured. Missing BLOB_READ_WRITE_TOKEN.",
+        },
+        { status: 500 }
+      );
     }
 
-    const fileName = Date.now() + "-" + file.name;
-    const filePath = path.join(uploadDir, fileName);
+    const blob = await put(
+      `documents/${mobile}/${Date.now()}-${file.name}`,
+      file,
+      {
+        access: "public",
+      }
+    );
 
-    fs.writeFileSync(filePath, buffer);
-
-    const fileUrl = "/uploads/" + fileName;
+    const fileUrl = blob.url;
 
     const user = await User.findOne({ mobile });
 
