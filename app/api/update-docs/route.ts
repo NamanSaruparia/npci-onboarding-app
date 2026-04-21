@@ -1,5 +1,7 @@
 export const runtime = "nodejs";
 
+import fs from "node:fs";
+import path from "node:path";
 import { put } from "@vercel/blob";
 import { connectDB } from "@/app/lib/mongodb";
 import User from "@/app/models/User";
@@ -24,7 +26,20 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    const timestampedName = `${Date.now()}-${file.name}`;
+    let fileUrl = "";
+
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      const blob = await put(
+        `documents/${mobile}/${timestampedName}`,
+        file,
+        {
+          access: "public",
+        }
+      );
+      fileUrl = blob.url;
+    } else if (process.env.VERCEL) {
+      // Vercel runtime should always use Blob storage.
       return Response.json(
         {
           success: false,
@@ -32,17 +47,20 @@ export async function POST(req: Request) {
         },
         { status: 500 }
       );
-    }
+    } else {
+      // Local/dev fallback so uploads continue to work without Blob token.
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const uploadDir = path.join(process.cwd(), "public/uploads");
 
-    const blob = await put(
-      `documents/${mobile}/${Date.now()}-${file.name}`,
-      file,
-      {
-        access: "public",
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
-    );
 
-    const fileUrl = blob.url;
+      const filePath = path.join(uploadDir, timestampedName);
+      fs.writeFileSync(filePath, buffer);
+      fileUrl = `/uploads/${timestampedName}`;
+    }
 
     const user = await User.findOne({ mobile });
 
