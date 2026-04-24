@@ -1,24 +1,19 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { hasValidSessionUser, sessionDestination } from "@/app/lib/session";
 
 const SPLASH_DURATION_S = 2;
 
 export default function Home() {
   const router = useRouter();
-  const [skipSplash, setSkipSplash] = useState(false);
   const redirectedRef = useRef(false);
 
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
-    if (hasValidSessionUser()) {
-      setSkipSplash(true);
-      router.replace(sessionDestination());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
+    localStorage.removeItem("user");
+    sessionStorage.clear();
   }, []);
 
   const goToLogin = () => {
@@ -26,10 +21,6 @@ export default function Home() {
     redirectedRef.current = true;
     router.replace("/login");
   };
-
-  if (skipSplash) {
-    return <div className="min-h-screen bg-white" aria-hidden />;
-  }
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-white text-slate-800">

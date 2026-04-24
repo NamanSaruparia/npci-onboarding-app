@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "fix-mobiles": "npx tsx scripts/fixMobiles.ts"
+    "fix-mobiles": "npx tsx scripts/fixMobiles.ts",
+    "set-profile-image": "npx tsx scripts/setProfileImage.ts"
   },
   "dependencies": {
     "framer-motion": "^12.38.0",

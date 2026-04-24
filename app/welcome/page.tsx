@@ -49,15 +49,8 @@ export default function WelcomePage() {
                   Hi {greetingName}, I&apos;m Nishith Chaturvedi
                 </h1>
                 <p className="text-sm leading-relaxed text-gray-500 sm:text-base">
-                  Welcome to NPCI — let&apos;s begin your onboarding journey
+                  Welcome to NPCI - G — let&apos;s begin your onboarding journey
                 </p>
-                <button
-                  type="button"
-                  onClick={() => router.replace("/dashboard")}
-                  className="mt-1 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-95"
-                >
-                  Begin Your Journey →
-                </button>
               </div>
 
               <motion.img
@@ -72,6 +65,28 @@ export default function WelcomePage() {
                 className="h-56 w-56 rounded-full object-cover shadow-sm ring-1 ring-slate-200 sm:h-64 sm:w-64"
               />
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="mt-6 border-t border-gray-100 pt-6"
+            >
+              <p className="mb-3 text-sm font-medium text-slate-500">Click here</p>
+              <button
+                type="button"
+                onClick={() => router.push("/welcome-message")}
+                className="flex w-full items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 px-5 py-4 text-left transition hover:border-indigo-100 hover:bg-indigo-50 hover:shadow-sm sm:w-auto"
+              >
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-2xl shadow-sm ring-1 ring-slate-200">
+                  💬
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">Welcome message</p>
+                  <p className="text-xs text-slate-500">Hear a personal welcome from leadership</p>
+                </div>
+              </button>
+            </motion.div>
           </motion.section>
         </div>
       </div>

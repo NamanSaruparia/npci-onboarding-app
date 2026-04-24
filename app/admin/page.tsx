@@ -3,8 +3,11 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { SessionLoading } from "../components/SessionLoading";
+import { useRequireSession } from "../hooks/useRequireSession";
 
 type AdminUser = {
   _id?: string;
@@ -94,6 +97,9 @@ function normalizeMobile(input: string): string {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
+  const { ready: sessionReady, sessionUser } = useRequireSession();
+
   const locations = ["Hyderabad", "Mumbai", "Chennai"] as const;
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
@@ -114,6 +120,14 @@ export default function AdminPage() {
 
   const totalUsers = useMemo(() => users.length, [users.length]);
 
+  // Redirect non-admin sessions away from this page
+  useEffect(() => {
+    if (!sessionReady) return;
+    if (!sessionUser?.isAdmin) {
+      router.replace("/dashboard");
+    }
+  }, [sessionReady, sessionUser, router]);
+
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -132,8 +146,9 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
+    if (!sessionReady || !sessionUser?.isAdmin) return;
     void fetchUsers();
-  }, []);
+  }, [sessionReady, sessionUser]);
 
   const handleAddUser = async (e: FormEvent) => {
     e.preventDefault();
@@ -317,6 +332,9 @@ export default function AdminPage() {
       setBusyMobile(null);
     }
   };
+
+  if (!sessionReady || !sessionUser) return <SessionLoading />;
+  if (!sessionUser.isAdmin) return <SessionLoading />;
 
   return (
     <div className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 sm:py-10">
@@ -1014,18 +1032,6 @@ export default function AdminPage() {
             </table>
           </div>
         </section>
-
-        <p className="text-center text-xs text-muted">
-          Temporary admin access is open. Set{" "}
-          <code className="rounded bg-background/70 px-1 py-0.5">
-            ADMIN_ACCESS_KEY
-          </code>{" "}
-          and send it as the{" "}
-          <code className="rounded bg-background/70 px-1 py-0.5">
-            x-admin-key
-          </code>{" "}
-          header to secure these APIs later.
-        </p>
 
         <p className="text-center text-sm text-muted">
           <Link

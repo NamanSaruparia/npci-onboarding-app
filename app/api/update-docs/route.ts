@@ -14,9 +14,6 @@ export async function POST(req: Request) {
     const documentName = formData.get("documentName")?.toString();
     const documentId = formData.get("documentId")?.toString();
 
-    console.log("Uploading file:", file?.name);
-    console.log("Mobile:", mobile);
-
     if (!mobile || !file || !documentName) {
       return Response.json(
         { success: false, message: "Missing fields" },

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     }
 
     const otp = process.env.DUMMY_OTP ?? "000000";
-    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 min for demo
+    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000);
 
     user.otp = otp;
     user.otpExpiry = otpExpiry;

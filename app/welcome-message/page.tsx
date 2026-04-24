@@ -107,14 +107,6 @@ export default function WelcomeMessagePage() {
             />
 
             <div className="relative flex flex-col items-center text-center">
-              <button
-                type="button"
-                onClick={() => router.push("/dashboard")}
-                className="mb-6 self-start rounded-xl border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
-              >
-                ← Back to dashboard
-              </button>
-
               <p className="text-sm font-medium text-indigo-600">
                 Hi {greeting},
               </p>
@@ -278,15 +270,26 @@ export default function WelcomeMessagePage() {
 
               <AnimatePresence>
                 {ended && (
-                  <motion.p
+                  <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="mt-8 max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800"
+                    className="mt-8 flex flex-col items-center gap-4"
                   >
-                    You&apos;re all set — explore document tracker and learning
-                    next from the dashboard.
-                  </motion.p>
+                    <p className="max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800">
+                      You&apos;re all set — explore document tracker and learning
+                      next from the dashboard.
+                    </p>
+                    <motion.button
+                      type="button"
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => router.replace("/dashboard")}
+                      className="rounded-xl bg-gradient-to-r from-primary to-secondary px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-95"
+                    >
+                      Begin Your Journey →
+                    </motion.button>
+                  </motion.div>
                 )}
               </AnimatePresence>
             </div>
