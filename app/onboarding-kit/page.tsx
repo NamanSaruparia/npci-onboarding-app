@@ -9,14 +9,21 @@ import { useRequireSession } from "../hooks/useRequireSession";
 import { parseSessionUser } from "@/app/lib/session";
 
 const onboardingKitItems = [
-  { name: "Coffee Mug", icon: "☕" },
-  { name: "Water Bottle", icon: "💧" },
-  { name: "Customized Diary & Pen", icon: "📓" },
-  { name: "Chair Cushion", icon: "🪑" },
-  { name: "Leadership Book", icon: "📘" },
-  { name: "Trolley Bag", icon: "🧳" },
-  { name: "Tech Gear", icon: "💻" },
+  { name: "Coffee Mug", icon: "☕", desc: "NPCI-branded ceramic mug" },
+  { name: "Water Bottle", icon: "💧", desc: "Pure copper bottle" },
+  { name: "Customized Diary & Pen", icon: "📓", desc: "Customized diary with pen" },
+  { name: "Leadership Book", icon: "📘", desc: "Curated for new leaders" },
+  { name: "Backpack", icon: "🎒", desc: "Premium laptop backpack" },
+  { name: "Rubik's Cube", icon: "🧩", desc: "Classic 3×3 puzzle cube" },
+  { name: "Bluetooth Speaker", icon: "🔊", desc: "Compact portable speaker" },
 ] as const;
+
+const rupayCardVariants = [
+  { id: "card_a", label: "Card Option A", gradient: "from-slate-700 to-slate-900" },
+  { id: "card_b", label: "Card Option B", gradient: "from-indigo-600 to-violet-700" },
+  { id: "card_c", label: "Card Option C", gradient: "from-rose-500 to-pink-700" },
+  { id: "card_d", label: "Card Option D", gradient: "from-amber-500 to-orange-600" },
+];
 
 type Mode = "loading" | "select" | "submitted";
 
@@ -25,6 +32,8 @@ export default function OnboardingKitPage() {
   const [mode, setMode] = useState<Mode>("loading");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
+  const [selectedCardVariant, setSelectedCardVariant] = useState<string>("");
+  const [bankName, setBankName] = useState("");
 
   useEffect(() => {
     if (!ready || !sessionUser) return;
@@ -77,6 +86,14 @@ export default function OnboardingKitPage() {
       toast.error("Please select at least one item.");
       return;
     }
+    if (!selectedCardVariant) {
+      toast.error("Please select a RuPay card design.");
+      return;
+    }
+    if (!bankName.trim()) {
+      toast.error("Please enter your bank name for the RuPay card.");
+      return;
+    }
 
     const u = parseSessionUser(
       typeof window !== "undefined" ? localStorage.getItem("user") : null
@@ -113,14 +130,32 @@ export default function OnboardingKitPage() {
   const handleEdit = () => setMode("select");
 
   return (
-    <div className="min-h-screen bg-white text-slate-800">
+    <div className="min-h-screen bg-[#f5f7fb] text-slate-800">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
-        <div className="app-page-base rounded-[24px] p-4 shadow-sm sm:p-6">
+        <div className="rounded-[24px] p-4 sm:p-6">
           <PageHeader
             title="Onboarding Kit"
             subtitle="Choose the items you'd like to receive on Day 1."
             titleEmoji="🎁"
           />
+
+          {/* Hero banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-6 overflow-hidden rounded-[22px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-500 px-6 py-6 shadow-lg"
+          >
+            <p className="text-xs font-medium uppercase tracking-widest text-indigo-200 mb-1">
+              Exclusively for you
+            </p>
+            <h2 className="text-xl font-bold text-white mb-1">
+              Your NPCI Welcome Kit
+            </h2>
+            <p className="text-sm text-indigo-100">
+              A premium collection curated for your leadership journey.
+            </p>
+          </motion.div>
 
           <AnimatePresence mode="wait">
             {/* Selection mode */}
@@ -132,66 +167,171 @@ export default function OnboardingKitPage() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               >
-                <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                  Your Onboarding Kit 🎁
-                </h2>
-
-                <p className="text-sm text-gray-500 mb-4">
-                  A premium kit curated for your leadership journey at NPCI
+                <p className="mb-4 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  Select items to include
                 </p>
 
-                <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {onboardingKitItems.map((item) => {
+                <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {onboardingKitItems.map((item, i) => {
                     const isSelected = selected.has(item.name);
                     return (
                       <motion.button
                         key={item.name}
                         type="button"
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => {
                           toggle(item.name);
-                          toast(`${item.name} will be included in your kit`);
+                          if (!isSelected) toast(`${item.name} added to your kit`);
                         }}
                         className={[
-                          "relative bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center border transition",
+                          "relative flex flex-col items-center gap-2 rounded-2xl border p-5 text-center shadow-sm transition-all duration-200",
                           isSelected
-                            ? "border-indigo-200 ring-2 ring-indigo-100"
-                            : "border-gray-100 hover:border-gray-200",
+                            ? "border-indigo-300 bg-gradient-to-b from-indigo-50 to-white ring-2 ring-indigo-100 shadow-indigo-100/60 shadow-md"
+                            : "border-slate-200 bg-white hover:border-indigo-200 hover:shadow-md",
                         ].join(" ")}
                       >
                         {isSelected && (
-                          <span className="absolute right-2 top-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                            Included
+                          <span className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white shadow">
+                            ✓
                           </span>
                         )}
-                        <span className="text-2xl mb-2" aria-hidden>
+                        <span
+                          className={[
+                            "flex h-14 w-14 items-center justify-center rounded-full text-3xl shadow-sm",
+                            isSelected ? "bg-indigo-100" : "bg-slate-50",
+                          ].join(" ")}
+                          aria-hidden
+                        >
                           {item.icon}
                         </span>
-                        <span className="text-xs text-gray-700 text-center">
+                        <span className="text-xs font-semibold text-slate-800 leading-tight">
                           {item.name}
+                        </span>
+                        <span className="text-[10px] text-slate-400 leading-snug">
+                          {item.desc}
                         </span>
                       </motion.button>
                     );
                   })}
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-slate-50 px-4 py-3">
-                  <p className="text-sm text-slate-600">
-                    <span className="font-semibold text-slate-800">
-                      {selected.size}
-                    </span>{" "}
-                    item{selected.size !== 1 ? "s" : ""} selected
-                  </p>
+                {/* RuPay Credit Card — mandatory */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  className="mb-6 overflow-hidden rounded-2xl border-2 border-indigo-200 bg-white shadow-sm"
+                >
+                  {/* Header */}
+                  <div className="flex items-center justify-between gap-3 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 to-white px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-xl shadow-sm">
+                        💳
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">RuPay Credit Card</p>
+                        <p className="text-[11px] text-slate-400">Issued on Day 1</p>
+                      </div>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-indigo-500 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                      Mandatory
+                    </span>
+                  </div>
+
+                  <div className="px-5 py-5 space-y-5">
+                    {/* Card variant picker */}
+                    <div>
+                      <p className="mb-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                        Choose your card design
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {rupayCardVariants.map((variant) => {
+                          const isChosen = selectedCardVariant === variant.id;
+                          return (
+                            <motion.button
+                              key={variant.id}
+                              type="button"
+                              whileHover={{ scale: 1.03, y: -2 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => setSelectedCardVariant(variant.id)}
+                              className={[
+                                "relative flex flex-col items-center gap-2.5 rounded-xl border p-3 text-center transition-all duration-200",
+                                isChosen
+                                  ? "border-indigo-400 ring-2 ring-indigo-100 shadow-md"
+                                  : "border-slate-200 hover:border-indigo-200 hover:shadow-sm",
+                              ].join(" ")}
+                            >
+                              {isChosen && (
+                                <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500 text-[9px] text-white shadow">
+                                  ✓
+                                </span>
+                              )}
+                              {/* Mini card preview */}
+                              <div
+                                className={[
+                                  "w-full rounded-lg bg-gradient-to-br px-3 py-2.5 shadow-sm",
+                                  variant.gradient,
+                                ].join(" ")}
+                              >
+                                <div className="flex items-start justify-between">
+                                  <span className="text-[8px] font-semibold tracking-widest text-white/70 uppercase">RuPay</span>
+                                  <span className="text-[10px] text-white/80">💳</span>
+                                </div>
+                                <div className="mt-2 flex gap-0.5">
+                                  {[0,1,2,3].map((n) => (
+                                    <span key={n} className="text-[6px] tracking-wider text-white/60">••••</span>
+                                  ))}
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-medium text-slate-600 leading-tight">
+                                {variant.label}
+                              </span>
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Bank name input */}
+                    <div>
+                      <label
+                        htmlFor="bank-name"
+                        className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide"
+                      >
+                        Your bank name
+                      </label>
+                      <input
+                        id="bank-name"
+                        type="text"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        placeholder="e.g. State Bank of India"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+
+                <div className="flex items-center justify-between rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white px-5 py-4 shadow-sm">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {selected.size} item{selected.size !== 1 ? "s" : ""} selected
+                    </p>
+                    <p className="text-xs text-slate-400">Ready for Day 1 delivery</p>
+                  </div>
                   <motion.button
                     type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     disabled={saving}
                     onClick={handleSubmit}
-                    className="rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-600 disabled:opacity-60"
+                    className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-200 transition hover:bg-indigo-600 disabled:opacity-60"
                   >
-                    {saving ? "Saving..." : "Submit selection"}
+                    {saving ? "Saving…" : "Confirm kit"}
                   </motion.button>
                 </div>
               </motion.div>
@@ -206,52 +346,101 @@ export default function OnboardingKitPage() {
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="mb-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
-                  <span className="text-2xl">✅</span>
+                <div className="mb-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white px-5 py-4 shadow-sm">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xl shadow-sm">
+                    ✅
+                  </span>
                   <div>
-                    <p className="text-sm font-semibold text-emerald-800">
-                      Kit confirmed
-                    </p>
-                    <p className="text-xs text-emerald-700">
-                      Your selections have been saved. We&apos;ll prepare your kit
-                      for Day 1.
+                    <p className="text-sm font-semibold text-emerald-800">Kit confirmed</p>
+                    <p className="text-xs text-emerald-600">
+                      We&apos;ll have everything ready and waiting for you on Day 1.
                     </p>
                   </div>
                 </div>
 
-                <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                  Your Onboarding Kit 🎁
-                </h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  A premium kit curated for your leadership journey at NPCI
+                <p className="mb-4 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  Your selections
                 </p>
 
-                <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  {onboardingKitItems.map((item) => {
+                <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {onboardingKitItems.map((item, i) => {
                     const isSelected = selected.has(item.name);
                     return (
-                      <div
+                      <motion.div
                         key={item.name}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05, duration: 0.3 }}
                         className={[
-                          "relative bg-white rounded-xl p-4 shadow-sm flex flex-col items-center justify-center border",
-                          isSelected ? "border-indigo-200" : "border-gray-100 opacity-70",
+                          "relative flex flex-col items-center gap-2 rounded-2xl border p-5 text-center shadow-sm transition-all",
+                          isSelected
+                            ? "border-indigo-200 bg-gradient-to-b from-indigo-50 to-white shadow-md shadow-indigo-100/50"
+                            : "border-slate-100 bg-white opacity-40",
                         ].join(" ")}
                       >
                         {isSelected && (
-                          <span className="absolute right-2 top-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-100">
-                            Included
+                          <span className="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white shadow">
+                            ✓
                           </span>
                         )}
-                        <span className="text-2xl mb-2" aria-hidden>
+                        <span
+                          className={[
+                            "flex h-14 w-14 items-center justify-center rounded-full text-3xl shadow-sm",
+                            isSelected ? "bg-indigo-100" : "bg-slate-50",
+                          ].join(" ")}
+                          aria-hidden
+                        >
                           {item.icon}
                         </span>
-                        <span className="text-xs text-gray-700 text-center">
+                        <span className="text-xs font-semibold text-slate-800 leading-tight">
                           {item.name}
                         </span>
-                      </div>
+                        <span className="text-[10px] text-slate-400 leading-snug">
+                          {item.desc}
+                        </span>
+                      </motion.div>
                     );
                   })}
                 </div>
+
+                {/* RuPay summary in submitted view */}
+                {(selectedCardVariant || bankName) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mb-6 overflow-hidden rounded-2xl border-2 border-indigo-200 bg-white shadow-sm"
+                  >
+                    <div className="flex items-center gap-3 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 to-white px-5 py-4">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-xl shadow-sm">
+                        💳
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">RuPay Credit Card</p>
+                        <p className="text-[11px] text-slate-400">Mandatory — included</p>
+                      </div>
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white shadow">
+                        ✓
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-4 px-5 py-4">
+                      {selectedCardVariant && (
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">Design</p>
+                          <p className="text-sm font-semibold text-slate-700">
+                            {rupayCardVariants.find((v) => v.id === selectedCardVariant)?.label ?? selectedCardVariant}
+                          </p>
+                        </div>
+                      )}
+                      {bankName && (
+                        <div>
+                          <p className="text-[10px] font-medium uppercase tracking-wide text-slate-400 mb-1">Bank</p>
+                          <p className="text-sm font-semibold text-slate-700">{bankName}</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
 
                 <div className="flex justify-end">
                   <motion.button
@@ -259,7 +448,7 @@ export default function OnboardingKitPage() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleEdit}
-                    className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:shadow-sm"
+                    className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:shadow-md"
                   >
                     Edit selection
                   </motion.button>

@@ -407,15 +407,16 @@ export default function Dashboard() {
   ];
 
   const day1Cards: MiniCardItem[] = [
-    { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon.") },
     { title: "HR induction", emoji: "🏛️", onClick: () => router.push("/learn/hr-induction") },
     { title: "Ready reckoner", emoji: "📘", onClick: () => router.push("/ready-reckoner") },
+    { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon.") },
   ];
 
   const weekCards: MiniCardItem[] = [
-    { title: "Check-in", emoji: "📅", onClick: () => router.push("/check-in") },
-    { title: "Assignment", emoji: "📋", onClick: () => toast("Coming soon.") },
+    { title: "Mid journey check in", emoji: "📅", onClick: () => router.push("/check-in") },
     { title: "Goal alignment", emoji: "🎯", onClick: () => toast("Coming soon.") },
+    { title: "Mini Assignment", emoji: "📋", onClick: () => toast("Coming soon.") },
+    { title: "Onboarding Feedback Survey", emoji: "📝", onClick: () => toast("Coming soon.") },
   ];
 
   const integrationCards: MiniCardItem[] = [
@@ -604,49 +605,22 @@ export default function Dashboard() {
           <h2 className="mb-5 text-base font-semibold text-slate-800">
             Progress
           </h2>
-          <div className="space-y-6">
-            <div>
-              <div className="mb-2 flex items-end justify-between gap-3">
-                <span className="text-sm font-medium text-slate-700">
-                  Pre-onboarding
-                </span>
-                <span className="text-sm tabular-nums text-slate-500">
-                  {preOnboardingProgress}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <motion.div
-                  initial={false}
-                  animate={{ width: `${preOnboardingProgress}%` }}
-                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full rounded-full bg-indigo-400"
-                />
-              </div>
-              <p className="mt-1.5 text-xs text-slate-500">
-                Documentation and know more — weighted equally for this preview.
-              </p>
-            </div>
-            <div>
-              <div className="mb-2 flex items-end justify-between gap-3">
-                <span className="text-sm font-medium text-slate-700">
-                  Overall journey
-                </span>
-                <span className="text-sm tabular-nums text-slate-500">
-                  {overallProgress}%
-                </span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                <motion.div
-                  initial={false}
-                  animate={{ width: `${overallProgress}%` }}
-                  transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                  className="h-full rounded-full bg-sky-400"
-                />
-              </div>
-              <p className="mt-1.5 text-xs text-slate-500">
-                All four stages combined (UI preview — backend wiring later).
-              </p>
-            </div>
+          <div className="flex items-center justify-around gap-4">
+            <CircularProgress
+              pct={preOnboardingProgress}
+              label="Pre-onboarding"
+              color="#6366f1"
+              trackColor="#e0e7ff"
+              size={108}
+            />
+            <div className="h-16 w-px bg-slate-100" />
+            <CircularProgress
+              pct={overallProgress}
+              label="Overall journey"
+              color="#0ea5e9"
+              trackColor="#e0f2fe"
+              size={108}
+            />
           </div>
         </section>
 
@@ -676,7 +650,7 @@ export default function Dashboard() {
               previewTag={uiPreviewLockOverride ? previewStageTag.day1 : undefined}
             />
             <StageQuadrant
-              title="3. First 15 Days"
+              title="3. 30 Day Journey"
               status={stageStatusForUi.week}
               tone="week"
               iconEmoji="📅"
@@ -717,6 +691,66 @@ export default function Dashboard() {
         </motion.button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CircularProgress({
+  pct,
+  label,
+  color,
+  trackColor,
+  size = 108,
+}: {
+  pct: number;
+  label: string;
+  color: string;
+  trackColor: string;
+  size?: number;
+}) {
+  const radius = (size - 14) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (pct / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center gap-2.5">
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} className="-rotate-90">
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={trackColor}
+            strokeWidth={10}
+          />
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            fill="none"
+            stroke={color}
+            strokeWidth={10}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset: offset }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <motion.span
+            key={pct}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="text-xl font-bold tabular-nums text-slate-800"
+          >
+            {pct}%
+          </motion.span>
+        </div>
+      </div>
+      <span className="text-xs font-medium text-slate-500">{label}</span>
     </div>
   );
 }
