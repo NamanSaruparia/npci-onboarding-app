@@ -41,6 +41,15 @@ type AdminUser = {
     q4: string;
     submittedAt?: string;
   } | null;
+  feedbackSurvey?: {
+    q1: number;
+    q2: number;
+    q3: number;
+    q4: string;
+    q5: string;
+    q6: string;
+    submittedAt?: string;
+  } | null;
   onboardingKit?: string[];
 };
 
@@ -72,6 +81,22 @@ const KIT_ITEMS: { name: string; icon: string }[] = [
 const KIT_ICON: Record<string, string> = Object.fromEntries(
   KIT_ITEMS.map((i) => [i.name, i.icon])
 );
+
+const SURVEY_SCALE: Record<number, { emoji: string; label: string }> = {
+  1: { emoji: "😞", label: "Very Poor" },
+  2: { emoji: "😕", label: "Poor" },
+  3: { emoji: "😐", label: "Average" },
+  4: { emoji: "🙂", label: "Good" },
+  5: { emoji: "😄", label: "Excellent" },
+};
+
+const SURVEY_QUESTIONS: Record<string, string> = {
+  q1: "How would you rate your overall onboarding experience at NPCI?",
+  q2: "How easy was it to use the onboarding platform?",
+  q3: "How comfortable do you feel in your role after the first 30 days?",
+  q5: "Which part of the onboarding journey helped you the most?",
+  q6: "What could have been done better in your onboarding experience?",
+};
 
 const BUDDY_QUESTIONS: Record<string, string> = {
   passion_work: "What are you most passionate about in life and work?",
@@ -116,7 +141,7 @@ export default function AdminPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [busyMobile, setBusyMobile] = useState<string | null>(null);
   const [expandedMobile, setExpandedMobile] = useState<string | null>(null);
-  const [expandedTab, setExpandedTab] = useState<"docs" | "buddy" | "checkin" | "kit">("docs");
+  const [expandedTab, setExpandedTab] = useState<"docs" | "buddy" | "checkin" | "kit" | "survey">("docs");
 
   const totalUsers = useMemo(() => users.length, [users.length]);
 
@@ -732,7 +757,7 @@ export default function AdminPage() {
                                 }}
                                 className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-200"
                               >
-                                {isExpanded && expandedTab === "buddy" ? "Hide Insights" : "Buddy Insights"}
+                                {isExpanded && expandedTab === "buddy" ? "Hide Profile" : "Candidate Profile"}
                               </button>
                               <button
                                 type="button"
@@ -761,6 +786,20 @@ export default function AdminPage() {
                                 className="rounded-lg border border-amber-300 bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-200"
                               >
                                 {isExpanded && expandedTab === "kit" ? "Hide Kit" : "🎁 Kit"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isExpanded && expandedTab === "survey") {
+                                    setExpandedMobile(null);
+                                  } else {
+                                    setExpandedMobile(user.mobile);
+                                    setExpandedTab("survey");
+                                  }
+                                }}
+                                className="rounded-lg border border-violet-300 bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-200"
+                              >
+                                {isExpanded && expandedTab === "survey" ? "Hide Survey" : "📝 Survey"}
                               </button>
                               <button
                                 type="button"
@@ -884,7 +923,7 @@ export default function AdminPage() {
                                   <div className="mb-3 flex items-center gap-2">
                                     <span className="text-base">🌱</span>
                                     <p className="text-xs font-semibold text-violet-300">
-                                      Buddy Insights — {user.name || user.mobile}
+                                      Candidate Profile — {user.name || user.mobile}
                                     </p>
                                   </div>
                                   {!user.buddyAnswers || user.buddyAnswers.length === 0 ? (
@@ -952,6 +991,79 @@ export default function AdminPage() {
                                     </>
                                   )}
                                 </div>
+                              ) : expandedTab === "survey" ? (
+                                /* ── Feedback Survey tab ──────────────────── */
+                                <div>
+                                  <div className="mb-3 flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-base">📝</span>
+                                      <p className="text-xs font-semibold text-violet-300">
+                                        Onboarding Feedback Survey — {user.name || user.mobile}
+                                      </p>
+                                    </div>
+                                    {user.feedbackSurvey?.submittedAt && (
+                                      <span className="text-[10px] text-muted">
+                                        Submitted{" "}
+                                        {new Date(user.feedbackSurvey.submittedAt).toLocaleString("en-IN", {
+                                          day: "numeric",
+                                          month: "short",
+                                          year: "numeric",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {!user.feedbackSurvey || user.feedbackSurvey.q1 === 0 ? (
+                                    <p className="text-xs text-muted">
+                                      This user hasn&apos;t submitted their Feedback Survey yet.
+                                    </p>
+                                  ) : (
+                                    <div className="grid gap-3 sm:grid-cols-2">
+                                      {(["q1", "q2", "q3"] as const).map((key) => {
+                                        const val = user.feedbackSurvey![key] as number;
+                                        const scale = SURVEY_SCALE[val];
+                                        return (
+                                          <div
+                                            key={key}
+                                            className="rounded-xl border border-violet-400/15 bg-violet-500/8 p-3"
+                                          >
+                                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+                                              {SURVEY_QUESTIONS[key]}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-2xl">{scale?.emoji ?? "—"}</span>
+                                              <div>
+                                                <p className="text-xs font-semibold text-foreground/90">
+                                                  {scale?.label ?? "—"}
+                                                </p>
+                                                <p className="text-[10px] text-muted">{val} / 5</p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+
+                                      {(["q5", "q6"] as const).map((key) => (
+                                        <div
+                                          key={key}
+                                          className="rounded-xl border border-violet-400/15 bg-violet-500/8 p-3 sm:col-span-2"
+                                        >
+                                          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+                                            {SURVEY_QUESTIONS[key]}
+                                          </p>
+                                          <p className="text-xs leading-relaxed text-foreground/85">
+                                            {user.feedbackSurvey![key]?.trim()
+                                              ? user.feedbackSurvey![key]
+                                              : <span className="italic text-muted">No response provided.</span>
+                                            }
+                                          </p>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
                               ) : (
                                 /* ── Check-In tab ─────────────────────────── */
                                 <div>
@@ -959,7 +1071,7 @@ export default function AdminPage() {
                                     <div className="flex items-center gap-2">
                                       <span className="text-base">📅</span>
                                       <p className="text-xs font-semibold text-teal-300">
-                                        15-Day Check-In — {user.name || user.mobile}
+                                        Mid Journey Check-In — {user.name || user.mobile}
                                       </p>
                                     </div>
                                     {user.checkInAnswers?.submittedAt && (
@@ -978,7 +1090,7 @@ export default function AdminPage() {
 
                                   {!user.checkInAnswers || user.checkInAnswers.q1 === 0 ? (
                                     <p className="text-xs text-muted">
-                                      This user hasn&apos;t submitted their 15-Day Check-In yet.
+                                      This user hasn&apos;t submitted their Mid Journey Check-In yet.
                                     </p>
                                   ) : (
                                     <div className="grid gap-3 sm:grid-cols-2">

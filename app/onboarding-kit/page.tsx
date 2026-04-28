@@ -14,7 +14,6 @@ const onboardingKitItems = [
   { name: "Customized Diary & Pen", icon: "📓", desc: "Customized diary with pen" },
   { name: "Leadership Book", icon: "📘", desc: "Curated for new leaders" },
   { name: "Backpack", icon: "🎒", desc: "Premium laptop backpack" },
-  { name: "Rubik's Cube", icon: "🧩", desc: "Classic 3×3 puzzle cube" },
   { name: "Bluetooth Speaker", icon: "🔊", desc: "Compact portable speaker" },
 ] as const;
 

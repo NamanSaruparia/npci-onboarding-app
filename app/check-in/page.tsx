@@ -160,7 +160,7 @@ export default function CheckIn() {
     <div className="min-h-screen bg-white text-slate-800">
       <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
         <PageHeader
-          title="15-Day Check-In"
+          title="Mid Journey Check-In"
           subtitle="Help us understand your onboarding experience."
           titleEmoji="📅"
         />

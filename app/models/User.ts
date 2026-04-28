@@ -28,6 +28,16 @@ interface ICheckInAnswers {
   submittedAt?: Date;
 }
 
+interface IFeedbackSurvey {
+  q1: number;
+  q2: number;
+  q3: number;
+  q4: string;
+  q5: string;
+  q6: string;
+  submittedAt?: Date;
+}
+
 export interface IUser {
   name: string;
   mobile: string;
@@ -49,6 +59,7 @@ export interface IUser {
   buddyAnswers: IBuddyAnswer[];
   isAdmin: boolean;
   checkInAnswers: ICheckInAnswers | null;
+  feedbackSurvey: IFeedbackSurvey | null;
 }
 
 const DocumentSchema = new mongoose.Schema(
@@ -98,6 +109,19 @@ const CheckInAnswersSchema = new mongoose.Schema(
     q2: { type: Number, default: 0, min: 0, max: 5 },
     q3: { type: Number, default: 0, min: 0, max: 5 },
     q4: { type: String, default: "" },
+    submittedAt: { type: Date },
+  },
+  { _id: false }
+);
+
+const FeedbackSurveySchema = new mongoose.Schema(
+  {
+    q1: { type: Number, default: 0, min: 0, max: 5 },
+    q2: { type: Number, default: 0, min: 0, max: 5 },
+    q3: { type: Number, default: 0, min: 0, max: 5 },
+    q4: { type: String, default: "" },
+    q5: { type: String, default: "" },
+    q6: { type: String, default: "" },
     submittedAt: { type: Date },
   },
   { _id: false }
@@ -191,6 +215,10 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: CheckInAnswersSchema,
     default: null,
   },
+  feedbackSurvey: {
+    type: FeedbackSurveySchema,
+    default: null,
+  },
 }, {
   timestamps: true,
 });
@@ -207,6 +235,7 @@ if (
     !ExistingUserModel.schema.path("documents.fileId") ||
     !ExistingUserModel.schema.path("buddyAnswers") ||
     !ExistingUserModel.schema.path("checkInAnswers") ||
+    !ExistingUserModel.schema.path("feedbackSurvey") ||
     !ExistingUserModel.schema.path("isAdmin") ||
     !ExistingUserModel.schema.path("employeeType") ||
     !ExistingUserModel.schema.path("entity") ||

@@ -105,6 +105,7 @@ type MiniCardItem = {
   title: string;
   emoji: string;
   onClick: () => void;
+  phase2?: boolean;
 };
 
 export default function Dashboard() {
@@ -392,7 +393,7 @@ export default function Dashboard() {
       onClick: () => router.push("/onboarding-kit"),
     },
     {
-      title: "Profile / know more",
+      title: "Your Profile",
       emoji: "👤",
       onClick: () => {
         setKnowMoreDone(true);
@@ -409,14 +410,14 @@ export default function Dashboard() {
   const day1Cards: MiniCardItem[] = [
     { title: "HR induction", emoji: "🏛️", onClick: () => router.push("/learn/hr-induction") },
     { title: "Ready reckoner", emoji: "📘", onClick: () => router.push("/ready-reckoner") },
-    { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon.") },
+    { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon."), phase2: true },
   ];
 
   const weekCards: MiniCardItem[] = [
     { title: "Mid journey check in", emoji: "📅", onClick: () => router.push("/check-in") },
-    { title: "Goal alignment", emoji: "🎯", onClick: () => toast("Coming soon.") },
-    { title: "Mini Assignment", emoji: "📋", onClick: () => toast("Coming soon.") },
-    { title: "Onboarding Feedback Survey", emoji: "📝", onClick: () => toast("Coming soon.") },
+    { title: "Goal alignment", emoji: "🎯", onClick: () => toast("Coming soon."), phase2: true },
+    { title: "Mini Assignment", emoji: "📋", onClick: () => toast("Coming soon."), phase2: true },
+    { title: "Onboarding Feedback Survey", emoji: "📝", onClick: () => router.push("/onboarding-feedback-survey") },
   ];
 
   const integrationCards: MiniCardItem[] = [
@@ -872,6 +873,7 @@ function StageQuadrant({
               emoji={card.emoji}
               disabled={locked}
               onClick={card.onClick}
+              phase2={card.phase2}
             />
           ))}
         </div>
@@ -915,11 +917,13 @@ function MiniStageCard({
   emoji,
   disabled,
   onClick,
+  phase2,
 }: {
   title: string;
   emoji: string;
   disabled: boolean;
   onClick: () => void;
+  phase2?: boolean;
 }) {
   return (
     <motion.button
@@ -934,6 +938,12 @@ function MiniStageCard({
         disabled ? "cursor-not-allowed opacity-75" : "hover:shadow-md",
       ].join(" ")}
     >
+      {phase2 && (
+        <span className="absolute left-2 top-2 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-400">
+          Phase 2
+        </span>
+      )}
+
       <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-2xl leading-none">
         <span aria-hidden>{emoji}</span>
       </span>
