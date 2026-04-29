@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     const user = await User.findOne({ mobile }).select(
-      "mobile employeeType entity band reportingManager documents uploadedDocs name position location profileImageUrl isAllowed isVerified"
+      "mobile employeeType entity band reportingManager documents uploadedDocs name position location profileImageUrl isAllowed isVerified onboardingKit buddyAnswers checkInAnswers feedbackSurvey"
     );
 
     if (!user) {

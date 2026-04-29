@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { parseSessionUser, type SessionUser } from "@/app/lib/session";
+import { normalizeSessionUser, parseSessionUser, type SessionUser } from "@/app/lib/session";
 
 /**
  * Guards app routes that require an OTP session. Redirects to /login if missing or invalid.
@@ -26,8 +26,9 @@ export function useRequireSession() {
   }, []);
 
   const replaceSession = useCallback((next: SessionUser) => {
-    localStorage.setItem("user", JSON.stringify(next));
-    setSessionUser(next);
+    const normalized = normalizeSessionUser(next);
+    localStorage.setItem("user", JSON.stringify(normalized));
+    setSessionUser(normalized);
   }, []);
 
   return { ready, sessionUser, replaceSession };

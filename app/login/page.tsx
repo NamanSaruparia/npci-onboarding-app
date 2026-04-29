@@ -165,16 +165,6 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50/30 px-4 py-10">
-      {/* Logo */}
-      <motion.img
-        src="/npci-logo.png"
-        alt="NPCI"
-        className="mb-8 h-14 w-14 object-contain"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      />
-
       <div className="w-full max-w-md">
         <motion.div
           className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60"
@@ -189,8 +179,8 @@ export default function Login() {
             </h1>
             <p className="mt-1 text-sm text-slate-500">
               {step === "role" && "Select your login type to continue"}
-              {step === "mobile" && (role === "admin" ? "Admin — enter your mobile" : "Employee — enter your mobile")}
-              {step === "otp" && "Enter the OTP sent to your mobile"}
+              {step === "mobile" && (role === "admin" ? "Admin — enter your mobile number" : "Employee — enter your mobile number")}
+              {step === "otp" && "Enter the OTP sent to your mobile number"}
             </p>
           </div>
 

@@ -16,6 +16,10 @@ type HeaderProfile = {
   position: string;
 };
 
+function normalizeDisplayName(name: string): string {
+  return name.replace(/RamaK/g, "Ramak");
+}
+
 const DEFAULT_PROFILE: HeaderProfile = {
   name: "Anu Ramakrishnan",
   position: "Head Transformation Planning & Design, HR CoE",
@@ -52,7 +56,7 @@ export function PageHeader({ title, subtitle, titleEmoji = "✨", showProfile = 
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-800">
-                {profile.name}
+                {normalizeDisplayName(profile.name)}
               </p>
               <p className="truncate text-xs text-slate-500">
                 {profile.position}

@@ -2,9 +2,8 @@
 
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useAppContext } from "../context/AppContext";
 import { useNotifications } from "../context/NotificationContext";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
@@ -22,22 +21,67 @@ type MiniCardItem = {
   phase2?: boolean;
 };
 
+const DASHBOARD_TILE_FLAGS_KEY = "dashboard_tile_flags";
+
+type DashboardTileFlags = {
+  deepDiveDone: boolean;
+  hrInductionDone: boolean;
+  readyReckonerDone: boolean;
+};
+
+const DEFAULT_TILE_FLAGS: DashboardTileFlags = {
+  deepDiveDone: false,
+  hrInductionDone: false,
+  readyReckonerDone: false,
+};
+
+function readTileFlags(): DashboardTileFlags {
+  if (typeof window === "undefined") return DEFAULT_TILE_FLAGS;
+  try {
+    const raw = localStorage.getItem(DASHBOARD_TILE_FLAGS_KEY);
+    if (!raw) return DEFAULT_TILE_FLAGS;
+    const parsed = JSON.parse(raw) as Partial<DashboardTileFlags>;
+    return {
+      deepDiveDone: Boolean(parsed.deepDiveDone),
+      hrInductionDone: Boolean(parsed.hrInductionDone),
+      readyReckonerDone: Boolean(parsed.readyReckonerDone),
+    };
+  } catch {
+    return DEFAULT_TILE_FLAGS;
+  }
+}
+
+function saveTileFlags(next: DashboardTileFlags) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(DASHBOARD_TILE_FLAGS_KEY, JSON.stringify(next));
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { ready: sessionReady, sessionUser, replaceSession } = useRequireSession();
 
   const daysLeft = 5;
 
-  const { uploadedDocs, totalDocs, setUploadedDocs } = useAppContext();
   const { notifications: ctxNotifications, unreadCount, markAllRead } = useNotifications();
-  const progress = Math.floor((uploadedDocs / totalDocs) * 100);
+  const [onboardingKitDone, setOnboardingKitDone] = useState(false);
+  const [profileDone, setProfileDone] = useState(false);
+  const [checkInDone, setCheckInDone] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [tileFlags, setTileFlags] = useState<DashboardTileFlags>(readTileFlags);
 
-  const [knowMoreDone, setKnowMoreDone] = useState(false);
+  const preCompletedCount =
+    Number(onboardingKitDone) + Number(profileDone) + Number(tileFlags.deepDiveDone);
+  const preOnboardingProgress = Math.round((preCompletedCount / 3) * 100);
 
-  const docTrackPct = progress;
-  const preOnboardingProgress = Math.round(
-    (docTrackPct + (knowMoreDone ? 100 : 0)) / 2
-  );
+  const overallCompletedCount =
+    Number(onboardingKitDone) +
+    Number(profileDone) +
+    Number(tileFlags.deepDiveDone) +
+    Number(tileFlags.hrInductionDone) +
+    Number(tileFlags.readyReckonerDone) +
+    Number(checkInDone) +
+    Number(feedbackDone);
+  const overallProgress = Math.round((overallCompletedCount / 7) * 100);
 
   const [stageStatus, setStageStatus] = useState<
     Record<StageId, StageStatus>
@@ -64,28 +108,8 @@ export default function Dashboard() {
     integration: "Milestones",
   };
 
-  const stageProgressPct = (id: StageId): number => {
-    if (stageStatus[id] === "completed") return 100;
-    if (stageStatus[id] === "locked") return 0;
-    if (id === "pre") return preOnboardingProgress;
-    return 0;
-  };
-
-  const overallProgress = Math.round(
-    (stageProgressPct("pre") +
-      stageProgressPct("day1") +
-      stageProgressPct("week") +
-      stageProgressPct("integration")) /
-      4
-  );
-
   const [showNotifications, setShowNotifications] = useState(false);
   const [loading, setLoading] = useState(true);
-  const uploadedDocsRef = useRef(uploadedDocs);
-
-  useEffect(() => {
-    uploadedDocsRef.current = uploadedDocs;
-  }, [uploadedDocs]);
 
   useEffect(() => {
     if (preOnboardingProgress < 100) return;
@@ -127,9 +151,21 @@ export default function Dashboard() {
         });
         const data = await res.json();
         if (data?.user) {
-          setUploadedDocs(data.user.uploadedDocs || 0);
           const role =
             String(data.user.role || data.user.position || u.role || u.position || "").trim();
+
+          const nextKitDone =
+            Array.isArray(data.user.onboardingKit) && data.user.onboardingKit.length > 0;
+          const nextProfileDone =
+            Array.isArray(data.user.buddyAnswers) &&
+            data.user.buddyAnswers.some((a: { answer?: string }) => String(a?.answer || "").trim());
+          const nextCheckInDone = Boolean(data.user.checkInAnswers?.submittedAt);
+          const nextFeedbackDone = Boolean(data.user.feedbackSurvey?.submittedAt);
+
+          setOnboardingKitDone(nextKitDone);
+          setProfileDone(nextProfileDone);
+          setCheckInDone(nextCheckInDone);
+          setFeedbackDone(nextFeedbackDone);
 
           const merged: SessionUser = {
             ...u,
@@ -152,7 +188,7 @@ export default function Dashboard() {
     };
 
     void fetchUser();
-  }, [sessionReady, setUploadedDocs, replaceSession]);
+  }, [sessionReady, replaceSession]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -187,9 +223,9 @@ export default function Dashboard() {
     notifications.push(`${daysLeft} days left — close out remaining tasks.`);
   }
 
-  if (progress < 50) {
+  if (overallProgress < 50) {
     notifications.push("Early stage — settle in and explore your onboarding journey.");
-  } else if (progress < 80) {
+  } else if (overallProgress < 80) {
     notifications.push("Solid momentum — keep engaging with your onboarding modules.");
   } else {
     notifications.push("Final stretch — you are almost ready for Day 1.");
@@ -258,21 +294,41 @@ export default function Dashboard() {
     {
       title: "Your Profile",
       emoji: "👤",
-      onClick: () => {
-        setKnowMoreDone(true);
-        router.push("/know-more");
-      },
+      onClick: () => router.push("/know-more"),
     },
     {
       title: "NPCI deep dive",
       emoji: "🔍",
-      onClick: () => router.push("/videos?tab=deep-dive"),
+      onClick: () => {
+        const next = { ...tileFlags, deepDiveDone: true };
+        setTileFlags(next);
+        saveTileFlags(next);
+        router.push("/videos?tab=deep-dive");
+      },
     },
   ];
 
   const day1Cards: MiniCardItem[] = [
-    { title: "HR induction", emoji: "🏛️", onClick: () => router.push("/learn/hr-induction") },
-    { title: "Ready reckoner", emoji: "📘", onClick: () => router.push("/ready-reckoner") },
+    {
+      title: "HR induction",
+      emoji: "🏛️",
+      onClick: () => {
+        const next = { ...tileFlags, hrInductionDone: true };
+        setTileFlags(next);
+        saveTileFlags(next);
+        router.push("/learn/hr-induction");
+      },
+    },
+    {
+      title: "Ready reckoner",
+      emoji: "📘",
+      onClick: () => {
+        const next = { ...tileFlags, readyReckonerDone: true };
+        setTileFlags(next);
+        saveTileFlags(next);
+        router.push("/ready-reckoner");
+      },
+    },
     { title: "Buddy connect", emoji: "👥", onClick: () => toast("Coming soon."), phase2: true },
   ];
 
@@ -324,7 +380,7 @@ export default function Dashboard() {
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:text-rose-500"
                 title="Log out"
               >
-                <span className="text-xl leading-none" aria-hidden>🚪</span>
+                <span className="text-xl leading-none" aria-hidden>⏻</span>
               </button>
 
             <div className="relative">

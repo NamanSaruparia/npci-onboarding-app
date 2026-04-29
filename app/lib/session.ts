@@ -16,11 +16,26 @@ export type SessionUser = {
   [key: string]: unknown;
 };
 
+function normalizeDisplayName(name: string): string {
+  const cleaned = name.trim().replace(/\s+/g, " ");
+  if (/^anu\s+rama\s*k\s*rishnan$/i.test(cleaned)) return "Anu Ramakrishnan";
+  return name;
+}
+
+export function normalizeSessionUser(u: SessionUser): SessionUser {
+  const next = { ...u };
+  if (typeof next.name === "string" && next.name.trim()) {
+    next.name = normalizeDisplayName(next.name);
+  }
+  return next;
+}
+
 export function parseSessionUser(raw: string | null): SessionUser | null {
   if (!raw) return null;
   try {
     const u = JSON.parse(raw) as SessionUser;
-    return u && typeof u === "object" ? u : null;
+    if (!u || typeof u !== "object") return null;
+    return normalizeSessionUser(u);
   } catch {
     return null;
   }
