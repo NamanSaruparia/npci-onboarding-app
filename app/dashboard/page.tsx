@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
@@ -381,12 +380,14 @@ export default function Dashboard() {
     }
   };
 
-  const preCards: MiniCardItem[] = [
+  /* Document tracker tile (temporarily hidden). Restore unchanged by adding this as the first item in `preCards`:
     {
       title: "Document tracker",
       emoji: "📄",
       onClick: () => router.push("/documents"),
     },
+  */
+  const preCards: MiniCardItem[] = [
     {
       title: "Onboarding kit",
       emoji: "🎁",
@@ -451,20 +452,10 @@ export default function Dashboard() {
         <section className="mb-4 rounded-[24px] border border-slate-200 bg-white shadow-sm">
           <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-4">
             <div className="flex min-w-0 items-center gap-3">
-              {user.profileImageUrl ? (
-                <Image
-                  src={user.profileImageUrl}
-                  alt={displayName}
-                  width={44}
-                  height={44}
-                  className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
-                />
-              ) : (
-                <div
-                  aria-hidden
-                  className="h-11 w-11 rounded-full border border-slate-200 bg-white ring-1 ring-slate-200"
-                />
-              )}
+              <div
+                aria-hidden
+                className="h-11 w-11 shrink-0 rounded-full bg-slate-100 ring-1 ring-slate-200"
+              />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-800">
                   {displayName}
@@ -589,15 +580,10 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center justify-center">
-                <Image
-                  src="/npci-logo.png"
-                  alt="NPCI"
-                  width={96}
-                  height={96}
-                  className="h-20 w-20 object-contain opacity-95 sm:h-24 sm:w-24"
-                />
-              </div>
+              <div
+                aria-hidden
+                className="h-20 w-20 shrink-0 sm:h-24 sm:w-24"
+              />
             </div>
           </motion.section>
         </section>

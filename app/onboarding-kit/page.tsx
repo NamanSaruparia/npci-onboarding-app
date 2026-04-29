@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
@@ -10,9 +11,14 @@ import { parseSessionUser } from "@/app/lib/session";
 
 const onboardingKitItems = [
   { name: "Coffee Mug", icon: "☕", desc: "NPCI-branded ceramic mug" },
-  { name: "Water Bottle", icon: "💧", desc: "Pure copper bottle" },
+  { name: "Water Bottle", icon: "🧴", desc: "Pure copper bottle" },
   { name: "Customized Diary & Pen", icon: "📓", desc: "Customized diary with pen" },
-  { name: "Leadership Book", icon: "📘", desc: "Curated for new leaders" },
+  {
+    name: "Leadership Book",
+    icon: "📘",
+    desc: "Curated for new leaders",
+    bookTitle: "Hard Things About Hard Things",
+  },
   { name: "Backpack", icon: "🎒", desc: "Premium laptop backpack" },
   { name: "Bluetooth Speaker", icon: "🔊", desc: "Compact portable speaker" },
 ] as const;
@@ -22,11 +28,13 @@ const rupayCardVariants = [
   { id: "card_b", label: "Card Option B", gradient: "from-indigo-600 to-violet-700" },
   { id: "card_c", label: "Card Option C", gradient: "from-rose-500 to-pink-700" },
   { id: "card_d", label: "Card Option D", gradient: "from-amber-500 to-orange-600" },
+  { id: "already_have", label: "Already have RuPay card", gradient: "from-slate-500 to-slate-700" },
 ];
 
 type Mode = "loading" | "select" | "submitted";
 
 export default function OnboardingKitPage() {
+  const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
   const [mode, setMode] = useState<Mode>("loading");
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -89,7 +97,7 @@ export default function OnboardingKitPage() {
       toast.error("Please select a RuPay card design.");
       return;
     }
-    if (!bankName.trim()) {
+    if (selectedCardVariant !== "already_have" && !bankName.trim()) {
       toast.error("Please enter your bank name for the RuPay card.");
       return;
     }
@@ -137,6 +145,14 @@ export default function OnboardingKitPage() {
             subtitle="Choose the items you'd like to receive on Day 1."
             titleEmoji="🎁"
           />
+
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          >
+            <span aria-hidden>←</span> Dashboard
+          </button>
 
           {/* Hero banner */}
           <motion.div
@@ -210,6 +226,11 @@ export default function OnboardingKitPage() {
                         <span className="text-xs font-semibold text-slate-800 leading-tight">
                           {item.name}
                         </span>
+                        {"bookTitle" in item && item.bookTitle ? (
+                          <span className="text-[10px] font-medium text-slate-500 leading-snug">
+                            {item.bookTitle}
+                          </span>
+                        ) : null}
                         <span className="text-[10px] text-slate-400 leading-snug">
                           {item.desc}
                         </span>
@@ -218,7 +239,7 @@ export default function OnboardingKitPage() {
                   })}
                 </div>
 
-                {/* RuPay Credit Card — mandatory */}
+                {/* RuPay Credit Card */}
                 <motion.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -236,16 +257,13 @@ export default function OnboardingKitPage() {
                         <p className="text-[11px] text-slate-400">Issued on Day 1</p>
                       </div>
                     </div>
-                    <span className="shrink-0 rounded-full bg-indigo-500 px-2.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                      Mandatory
-                    </span>
                   </div>
 
                   <div className="px-5 py-5 space-y-5">
                     {/* Card variant picker */}
                     <div>
                       <p className="mb-3 text-xs font-medium text-slate-500 uppercase tracking-wide">
-                        Choose your card design
+                        Choose your card option
                       </p>
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         {rupayCardVariants.map((variant) => {
@@ -296,22 +314,24 @@ export default function OnboardingKitPage() {
                     </div>
 
                     {/* Bank name input */}
-                    <div>
-                      <label
-                        htmlFor="bank-name"
-                        className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide"
-                      >
-                        Your bank name
-                      </label>
-                      <input
-                        id="bank-name"
-                        type="text"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder="e.g. State Bank of India"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
-                      />
-                    </div>
+                    {selectedCardVariant !== "already_have" && (
+                      <div>
+                        <label
+                          htmlFor="bank-name"
+                          className="mb-1.5 block text-xs font-medium text-slate-500 uppercase tracking-wide"
+                        >
+                          Your bank name
+                        </label>
+                        <input
+                          id="bank-name"
+                          type="text"
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          placeholder="e.g. State Bank of India"
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 placeholder-slate-400 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+                        />
+                      </div>
+                    )}
                   </div>
                 </motion.div>
 
@@ -394,6 +414,11 @@ export default function OnboardingKitPage() {
                         <span className="text-xs font-semibold text-slate-800 leading-tight">
                           {item.name}
                         </span>
+                        {"bookTitle" in item && item.bookTitle ? (
+                          <span className="text-[10px] font-medium text-slate-500 leading-snug">
+                            {item.bookTitle}
+                          </span>
+                        ) : null}
                         <span className="text-[10px] text-slate-400 leading-snug">
                           {item.desc}
                         </span>
@@ -416,7 +441,7 @@ export default function OnboardingKitPage() {
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">RuPay Credit Card</p>
-                        <p className="text-[11px] text-slate-400">Mandatory — included</p>
+                        <p className="text-[11px] text-slate-400">Included in your onboarding kit</p>
                       </div>
                       <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500 text-[10px] text-white shadow">
                         ✓

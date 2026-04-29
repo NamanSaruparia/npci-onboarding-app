@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { parseSessionUser } from "@/app/lib/session";
 import { useNotifications } from "@/app/context/NotificationContext";
 
@@ -15,13 +14,11 @@ type PageHeaderProps = {
 type HeaderProfile = {
   name: string;
   position: string;
-  profileImageUrl: string;
 };
 
 const DEFAULT_PROFILE: HeaderProfile = {
   name: "Anu Ramakrishnan",
   position: "Head Transformation Planning & Design, HR CoE",
-  profileImageUrl: "/dashboard-profile.png",
 };
 
 function getInitialProfile(): HeaderProfile {
@@ -35,7 +32,6 @@ function getInitialProfile(): HeaderProfile {
     position:
       String(parsed.role || parsed.position || "").trim() ||
       DEFAULT_PROFILE.position,
-    profileImageUrl: parsed.profileImageUrl || DEFAULT_PROFILE.profileImageUrl,
   };
 }
 
@@ -50,12 +46,9 @@ export function PageHeader({ title, subtitle, titleEmoji = "✨", showProfile = 
       {showProfile && (
         <header className="flex items-center justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div className="flex min-w-0 items-center gap-3">
-            <Image
-              src={profile.profileImageUrl}
-              alt="Profile"
-              width={44}
-              height={44}
-              className="h-11 w-11 rounded-full object-cover ring-1 ring-slate-200"
+            <div
+              aria-hidden
+              className="h-11 w-11 shrink-0 rounded-full bg-slate-100 ring-1 ring-slate-200"
             />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-800">

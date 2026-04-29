@@ -1,7 +1,6 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, Fragment, useEffect, useMemo, useState } from "react";
@@ -556,12 +555,9 @@ export default function AdminPage() {
                       <tr key={user.mobile} className="border-t border-border/60">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <Image
-                              src={user.profileImageUrl || "/dashboard-profile.png"}
-                              alt={user.name || "Profile"}
-                              width={28}
-                              height={28}
-                              className="h-7 w-7 rounded-full object-cover ring-1 ring-border"
+                            <div
+                              aria-hidden
+                              className="h-7 w-7 shrink-0 rounded-full bg-muted ring-1 ring-border"
                             />
                             <div>
                               <p className="text-xs font-medium text-foreground">{user.name || "Unnamed"}</p>
@@ -667,12 +663,9 @@ export default function AdminPage() {
                         >
                           <td className="px-5 py-3 sm:px-6">
                             <div className="flex items-center gap-2.5">
-                              <Image
-                                src={user.profileImageUrl || "/dashboard-profile.png"}
-                                alt={user.name || "Profile"}
-                                width={36}
-                                height={36}
-                                className="h-9 w-9 rounded-full object-cover ring-1 ring-border"
+                              <div
+                                aria-hidden
+                                className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border"
                               />
                               <span className="text-xs font-medium text-foreground">
                                 {user.name || "Unnamed"}
