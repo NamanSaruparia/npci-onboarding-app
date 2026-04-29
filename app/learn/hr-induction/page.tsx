@@ -74,18 +74,6 @@ const MODULES: LearningModule[] = [
     status: "coming-soon",
   },
   {
-    id: "module-5",
-    number: 5,
-    title: "Information Security",
-    description:
-      "Data handling, secure workspaces and how we keep NPCI and its partners safe.",
-    duration: "~11 min",
-    emoji: "🔐",
-    gradient: "from-sky-500 to-cyan-500",
-    accent: "bg-sky-50 text-sky-700 ring-sky-100",
-    status: "coming-soon",
-  },
-  {
     id: "module-6",
     number: 6,
     title: "Your First 90 Days",

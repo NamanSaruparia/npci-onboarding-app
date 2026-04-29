@@ -7,94 +7,9 @@ import toast from "react-hot-toast";
 import { useAppContext } from "../context/AppContext";
 import { useNotifications } from "../context/NotificationContext";
 import { SessionLoading } from "../components/SessionLoading";
-import { JourneyPopup } from "../components/JourneyPopup";
 import { useRequireSession } from "../hooks/useRequireSession";
 import { parseSessionUser, type SessionUser } from "@/app/lib/session";
 
-const DASHBOARD_TOAST_KEY = "npci-dashboard-summary-shown";
-const SHOWN_JOURNEY_NOTIFICATIONS_KEY = "shown_notifications";
-
-type JourneyStage = "pre_onboarding" | "day1" | "first15" | "day15" | "day30";
-
-type JourneyPopupConfig = {
-  message: string;
-  ctaLabel?: string;
-  ctaPath?: string;
-};
-
-const JOURNEY_POPUP_CONTENT: Record<JourneyStage, JourneyPopupConfig> = {
-  pre_onboarding: {
-    message: "Welcome to NPCI - G! Let’s get you ready for Day 1.",
-    ctaLabel: "Go to Tasks",
-    ctaPath: "/documents",
-  },
-  day1: {
-    message: "Welcome aboard! Complete your onboarding checklist to get started.",
-    ctaLabel: "Go to Checklist",
-    ctaPath: "/timeline",
-  },
-  first15: {
-    message: "You're settling in! Schedule your role kickoff with your manager.",
-    ctaLabel: "Open Check-in",
-    ctaPath: "/check-in",
-  },
-  day15: {
-    message: "Time for your 15-day check-in. Share what's working and where you need support.",
-    ctaLabel: "Start Check-in",
-    ctaPath: "/check-in",
-  },
-  day30: {
-    message:
-      "Complete your onboarding journey by submitting your feedback and aligning your goals.",
-    ctaLabel: "View Goals",
-    ctaPath: "/check-in",
-  },
-};
-
-function parseDateSafe(value: unknown): Date | null {
-  if (typeof value !== "string" || !value.trim()) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-}
-
-function getDaysFromJoining(user: SessionUser): number | null {
-  const dateCandidate =
-    user.joiningDate ||
-    user.dateOfJoining ||
-    user.doj ||
-    user.joinDate ||
-    user.startDate ||
-    null;
-  const joinedAt = parseDateSafe(dateCandidate);
-  if (!joinedAt) return null;
-
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  return Math.floor((Date.now() - joinedAt.getTime()) / oneDayMs);
-}
-
-function detectJourneyStage(user: SessionUser): JourneyStage {
-  if (typeof window !== "undefined") {
-    const forcedStage = localStorage.getItem("mock_journey_stage");
-    if (
-      forcedStage === "pre_onboarding" ||
-      forcedStage === "day1" ||
-      forcedStage === "first15" ||
-      forcedStage === "day15" ||
-      forcedStage === "day30"
-    ) {
-      return forcedStage;
-    }
-  }
-
-  const days = getDaysFromJoining(user);
-
-  if (days === null) return "pre_onboarding";
-  if (days < 0) return "pre_onboarding";
-  if (days === 0) return "day1";
-  if (days === 15) return "day15";
-  if (days >= 30) return "day30";
-  return "first15";
-}
 
 type StageId = "pre" | "day1" | "week" | "integration";
 type StageStatus = "locked" | "active" | "completed";
@@ -165,7 +80,6 @@ export default function Dashboard() {
   );
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [journeyPopupStage, setJourneyPopupStage] = useState<JourneyStage | null>(null);
   const [loading, setLoading] = useState(true);
   const uploadedDocsRef = useRef(uploadedDocs);
 
@@ -196,25 +110,6 @@ export default function Dashboard() {
     const t = window.setTimeout(() => setLoading(false), 640);
     return () => window.clearTimeout(t);
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || loading) return;
-    if (sessionStorage.getItem(DASHBOARD_TOAST_KEY) === "1") return;
-
-    const id = window.setTimeout(() => {
-      if (sessionStorage.getItem(DASHBOARD_TOAST_KEY) === "1") return;
-      sessionStorage.setItem(DASHBOARD_TOAST_KEY, "1");
-      const count = uploadedDocsRef.current;
-      const pending = Math.max(0, totalDocs - count);
-      const line =
-        pending > 0
-          ? `${daysLeft} days to Day 1 · ${pending} document${pending === 1 ? "" : "s"} pending`
-          : `${daysLeft} days to Day 1 · paperwork complete`;
-      toast(line);
-    }, 700);
-
-    return () => window.clearTimeout(id);
-  }, [loading, totalDocs, daysLeft]);
 
   useEffect(() => {
     if (!sessionReady) return;
@@ -267,29 +162,6 @@ export default function Dashboard() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  useEffect(() => {
-    if (!sessionReady || !sessionUser || loading) return;
-    if (typeof window === "undefined") return;
-
-    const stage = detectJourneyStage(sessionUser);
-
-    let shownMap: Record<string, boolean> = {};
-    const raw = localStorage.getItem(SHOWN_JOURNEY_NOTIFICATIONS_KEY);
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw) as Record<string, boolean>;
-        if (parsed && typeof parsed === "object") shownMap = parsed;
-      } catch {
-        shownMap = {};
-      }
-    }
-
-    if (shownMap[stage]) return;
-    setJourneyPopupStage(stage);
-    shownMap[stage] = true;
-    localStorage.setItem(SHOWN_JOURNEY_NOTIFICATIONS_KEY, JSON.stringify(shownMap));
-  }, [sessionReady, sessionUser, loading]);
-
   if (!sessionReady || !sessionUser || loading) {
     return <SessionLoading />;
   }
@@ -315,22 +187,12 @@ export default function Dashboard() {
     notifications.push(`${daysLeft} days left — close out remaining tasks.`);
   }
 
-  if (uploadedDocs < totalDocs) {
-    notifications.push(
-      `${totalDocs - uploadedDocs} document${
-        totalDocs - uploadedDocs === 1 ? "" : "s"
-      } awaiting upload.`
-    );
-  } else {
-    notifications.push("All listed documents are marked complete.");
-  }
-
   if (progress < 50) {
-    notifications.push("Early stage — prioritize compliance items first.");
+    notifications.push("Early stage — settle in and explore your onboarding journey.");
   } else if (progress < 80) {
-    notifications.push("Solid momentum — keep learning modules in parallel.");
+    notifications.push("Solid momentum — keep engaging with your onboarding modules.");
   } else {
-    notifications.push("Final stretch — review submissions before Day 1.");
+    notifications.push("Final stretch — you are almost ready for Day 1.");
   }
 
   notifications.push("New curated sessions are available under Learning.");
@@ -430,22 +292,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-white text-slate-800">
-      <JourneyPopup
-        open={Boolean(journeyPopupStage)}
-        message={
-          journeyPopupStage ? JOURNEY_POPUP_CONTENT[journeyPopupStage].message : ""
-        }
-        ctaLabel={
-          journeyPopupStage ? JOURNEY_POPUP_CONTENT[journeyPopupStage].ctaLabel : undefined
-        }
-        onCta={() => {
-          if (!journeyPopupStage) return;
-          const path = JOURNEY_POPUP_CONTENT[journeyPopupStage].ctaPath;
-          setJourneyPopupStage(null);
-          if (path) router.push(path);
-        }}
-        onClose={() => setJourneyPopupStage(null)}
-      />
       <div className="mx-auto max-w-lg px-4 py-6 sm:max-w-4xl sm:px-6 sm:py-8">
         <div className="rounded-[24px] bg-[#f5f7fb] p-4 shadow-sm sm:p-6">
 
