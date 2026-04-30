@@ -19,9 +19,11 @@ type MiniCardItem = {
   emoji: string;
   onClick: () => void;
   phase2?: boolean;
+  completed?: boolean;
 };
 
 const DASHBOARD_TILE_FLAGS_KEY = "dashboard_tile_flags";
+const DASHBOARD_BADGES_KEY = "dashboard_badges";
 
 type DashboardTileFlags = {
   deepDiveDone: boolean;
@@ -33,6 +35,20 @@ const DEFAULT_TILE_FLAGS: DashboardTileFlags = {
   deepDiveDone: false,
   hrInductionDone: false,
   readyReckonerDone: false,
+};
+
+type DashboardBadgeFlags = {
+  explorer: boolean;
+  collaborator: boolean;
+  achiever: boolean;
+  navigator: boolean;
+};
+
+const DEFAULT_BADGE_FLAGS: DashboardBadgeFlags = {
+  explorer: false,
+  collaborator: false,
+  achiever: false,
+  navigator: false,
 };
 
 function readTileFlags(): DashboardTileFlags {
@@ -56,18 +72,41 @@ function saveTileFlags(next: DashboardTileFlags) {
   localStorage.setItem(DASHBOARD_TILE_FLAGS_KEY, JSON.stringify(next));
 }
 
+function readBadgeFlags(): DashboardBadgeFlags {
+  if (typeof window === "undefined") return DEFAULT_BADGE_FLAGS;
+  try {
+    const raw = localStorage.getItem(DASHBOARD_BADGES_KEY);
+    if (!raw) return DEFAULT_BADGE_FLAGS;
+    const parsed = JSON.parse(raw) as Partial<DashboardBadgeFlags>;
+    return {
+      explorer: Boolean(parsed.explorer),
+      collaborator: Boolean(parsed.collaborator),
+      achiever: Boolean(parsed.achiever),
+      navigator: Boolean(parsed.navigator),
+    };
+  } catch {
+    return DEFAULT_BADGE_FLAGS;
+  }
+}
+
+function saveBadgeFlags(next: DashboardBadgeFlags) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(DASHBOARD_BADGES_KEY, JSON.stringify(next));
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { ready: sessionReady, sessionUser, replaceSession } = useRequireSession();
 
   const daysLeft = 5;
 
-  const { notifications: ctxNotifications, unreadCount, markAllRead } = useNotifications();
+  const { notifications: ctxNotifications, unreadCount, markAllRead, addNotification } = useNotifications();
   const [onboardingKitDone, setOnboardingKitDone] = useState(false);
   const [profileDone, setProfileDone] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
   const [tileFlags, setTileFlags] = useState<DashboardTileFlags>(readTileFlags);
+  const [badgeFlags, setBadgeFlags] = useState<DashboardBadgeFlags>(readBadgeFlags);
 
   const preCompletedCount =
     Number(onboardingKitDone) + Number(profileDone) + Number(tileFlags.deepDiveDone);
@@ -82,6 +121,7 @@ export default function Dashboard() {
     Number(checkInDone) +
     Number(feedbackDone);
   const overallProgress = Math.round((overallCompletedCount / 7) * 100);
+  const day1OnboardingDone = tileFlags.hrInductionDone && tileFlags.readyReckonerDone;
 
   const [stageStatus, setStageStatus] = useState<
     Record<StageId, StageStatus>
@@ -129,6 +169,53 @@ export default function Dashboard() {
 
     return () => window.clearTimeout(timeoutId);
   }, [preOnboardingProgress]);
+
+  useEffect(() => {
+    const shouldUnlock = {
+      explorer: preOnboardingProgress >= 100,
+      collaborator: day1OnboardingDone,
+      achiever: checkInDone,
+      navigator: feedbackDone,
+    };
+    const unlockedNow = {
+      explorer: shouldUnlock.explorer && !badgeFlags.explorer,
+      collaborator: shouldUnlock.collaborator && !badgeFlags.collaborator,
+      achiever: shouldUnlock.achiever && !badgeFlags.achiever,
+      navigator: shouldUnlock.navigator && !badgeFlags.navigator,
+    };
+
+    if (!Object.values(unlockedNow).some(Boolean)) return;
+
+    const next: DashboardBadgeFlags = {
+      explorer: badgeFlags.explorer || unlockedNow.explorer,
+      collaborator: badgeFlags.collaborator || unlockedNow.collaborator,
+      achiever: badgeFlags.achiever || unlockedNow.achiever,
+      navigator: badgeFlags.navigator || unlockedNow.navigator,
+    };
+
+    setBadgeFlags(next);
+    saveBadgeFlags(next);
+
+    if (unlockedNow.explorer) {
+      addNotification("🏅 Explorer badge unlocked! You completed Pre-Onboarding.");
+    }
+    if (unlockedNow.collaborator) {
+      addNotification("🤝 Collaborator badge unlocked! You completed Day 1 Onboarding.");
+    }
+    if (unlockedNow.achiever) {
+      addNotification("🎖️ Achiever badge unlocked! Mid Journey Check-In completed.");
+    }
+    if (unlockedNow.navigator) {
+      addNotification("🥇 Navigator badge unlocked! Onboarding Feedback Survey completed.");
+    }
+  }, [
+    preOnboardingProgress,
+    day1OnboardingDone,
+    checkInDone,
+    feedbackDone,
+    badgeFlags,
+    addNotification,
+  ]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setLoading(false), 640);
@@ -340,10 +427,34 @@ export default function Dashboard() {
   ];
 
   const integrationCards: MiniCardItem[] = [
-    { title: "Explorer", emoji: "🛡️", onClick: () => toast("Badge path coming soon.") },
-    { title: "Collaborator", emoji: "🏆", onClick: () => toast("Badge path coming soon.") },
-    { title: "Achiever", emoji: "🎖️", onClick: () => toast("Badge path coming soon.") },
-    { title: "Navigator", emoji: "🥇", onClick: () => toast("Badge path coming soon.") },
+    {
+      title: "Explorer",
+      emoji: "🛡️",
+      completed: badgeFlags.explorer,
+      onClick: () =>
+        toast(badgeFlags.explorer ? "Explorer badge unlocked ✅" : "Complete Pre-Onboarding to unlock."),
+    },
+    {
+      title: "Collaborator",
+      emoji: "🏆",
+      completed: badgeFlags.collaborator,
+      onClick: () =>
+        toast(badgeFlags.collaborator ? "Collaborator badge unlocked ✅" : "Complete Day 1 Onboarding to unlock."),
+    },
+    {
+      title: "Achiever",
+      emoji: "🎖️",
+      completed: badgeFlags.achiever,
+      onClick: () =>
+        toast(badgeFlags.achiever ? "Achiever badge unlocked ✅" : "Complete Mid Journey Check-In to unlock."),
+    },
+    {
+      title: "Navigator",
+      emoji: "🥇",
+      completed: badgeFlags.navigator,
+      onClick: () =>
+        toast(badgeFlags.navigator ? "Navigator badge unlocked ✅" : "Complete Onboarding Feedback Survey to unlock."),
+    },
   ];
 
   return (
@@ -762,6 +873,7 @@ function StageQuadrant({
               disabled={locked}
               onClick={card.onClick}
               phase2={card.phase2}
+              completed={card.completed}
             />
           ))}
         </div>
@@ -806,12 +918,14 @@ function MiniStageCard({
   disabled,
   onClick,
   phase2,
+  completed = false,
 }: {
   title: string;
   emoji: string;
   disabled: boolean;
   onClick: () => void;
   phase2?: boolean;
+  completed?: boolean;
 }) {
   return (
     <motion.button
@@ -823,12 +937,21 @@ function MiniStageCard({
       onClick={onClick}
       className={[
         "group relative flex min-h-[6.6rem] flex-col items-center justify-center gap-2.5 overflow-hidden rounded-xl border border-slate-100 bg-white p-4 text-center shadow-sm",
-        disabled ? "cursor-not-allowed opacity-75" : "hover:shadow-md",
+        completed
+          ? "border-emerald-200 bg-emerald-50/40"
+          : disabled
+            ? "cursor-not-allowed opacity-75"
+            : "hover:shadow-md",
       ].join(" ")}
     >
       {phase2 && (
         <span className="absolute left-2 top-2 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-slate-400">
           Phase 2
+        </span>
+      )}
+      {completed && (
+        <span className="absolute right-2 top-2 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+          ✓
         </span>
       )}
 
