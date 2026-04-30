@@ -323,17 +323,6 @@ export default function Documents() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard")}
-            className="mb-6 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
-          >
-            <span className="text-base" aria-hidden>
-              ←
-            </span>
-            Dashboard
-          </button>
-
           <header className="mb-6 space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
               Document checklist
@@ -449,6 +438,17 @@ export default function Documents() {
               </section>
             ))}
           </div>
+
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
+          >
+            <span className="text-base" aria-hidden>
+              ←
+            </span>
+            Dashboard
+          </button>
         </motion.div>
         </div>
       </div>

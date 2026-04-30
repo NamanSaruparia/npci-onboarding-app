@@ -126,14 +126,6 @@ export default function ReadyReckoner() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="space-y-5"
           >
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
-            >
-              <span aria-hidden>←</span> Dashboard
-            </button>
-
             {/* Hero banner */}
             <div className="overflow-hidden rounded-[22px] bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-500 px-6 py-5 shadow-lg">
               <p className="text-xs font-medium uppercase tracking-widest text-indigo-200 mb-1">
@@ -204,6 +196,14 @@ export default function ReadyReckoner() {
                 })}
               </div>
             </motion.section>
+
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+            >
+              <span aria-hidden>←</span> Dashboard
+            </button>
           </motion.div>
         </div>
       </div>

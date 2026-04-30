@@ -50,6 +50,10 @@ type AdminUser = {
     submittedAt?: string;
   } | null;
   onboardingKit?: string[];
+  onboardingKitDetails?: {
+    selectedCardVariant?: string;
+    bankName?: string;
+  } | null;
 };
 
 const CHECKIN_SCALE: Record<number, { emoji: string; label: string }> = {
@@ -68,13 +72,12 @@ const CHECKIN_QUESTIONS: Record<string, string> = {
 };
 
 const KIT_ITEMS: { name: string; icon: string }[] = [
-  { name: "Coffee Mug",           icon: "☕" },
-  { name: "Water Bottle",         icon: "💧" },
+  { name: "Coffee Mug", icon: "☕" },
+  { name: "Water Bottle", icon: "🧴" },
   { name: "Customized Diary & Pen", icon: "📓" },
-  { name: "Chair Cushion",        icon: "🪑" },
-  { name: "Leadership Book",      icon: "📘" },
-  { name: "Trolley Bag",          icon: "🧳" },
-  { name: "Tech Gear",            icon: "💻" },
+  { name: "Leadership Book", icon: "📘" },
+  { name: "Backpack", icon: "🎒" },
+  { name: "Bluetooth Speaker", icon: "🔊" },
 ];
 
 const KIT_ICON: Record<string, string> = Object.fromEntries(
@@ -981,6 +984,31 @@ export default function AdminPage() {
                                           );
                                         })}
                                       </div>
+                                      {(user.onboardingKitDetails?.selectedCardVariant ||
+                                        user.onboardingKitDetails?.bankName) && (
+                                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                                          <div className="rounded-xl border border-amber-400/15 bg-amber-500/8 p-3">
+                                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                                              RuPay Card Design
+                                            </p>
+                                            <p className="text-xs text-foreground/85">
+                                              {user.onboardingKitDetails?.selectedCardVariant?.trim()
+                                                ? user.onboardingKitDetails.selectedCardVariant
+                                                : <span className="italic text-muted">No design selected</span>}
+                                            </p>
+                                          </div>
+                                          <div className="rounded-xl border border-amber-400/15 bg-amber-500/8 p-3">
+                                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+                                              Bank Name
+                                            </p>
+                                            <p className="text-xs text-foreground/85">
+                                              {user.onboardingKitDetails?.bankName?.trim()
+                                                ? user.onboardingKitDetails.bankName
+                                                : <span className="italic text-muted">Not provided</span>}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      )}
                                     </>
                                   )}
                                 </div>

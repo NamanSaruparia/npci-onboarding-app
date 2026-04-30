@@ -52,6 +52,19 @@ const MODULES: LearningModule[] = [
   {
     id: "module-3",
     number: 3,
+    title: "Performance Management & Rewards and Recognition",
+    description:
+      "Understand how performance is reviewed at NPCI and how rewards and recognition celebrate great work.",
+    duration: "~4 min",
+    emoji: "🏆",
+    gradient: "from-amber-500 to-orange-500",
+    accent: "bg-amber-50 text-amber-700 ring-amber-100",
+    href: "/learn/hr-induction/module-3",
+    status: "available",
+  },
+  {
+    id: "module-4",
+    number: 4,
     title: "Policies & Code of Conduct",
     description:
       "Key HR policies, the code of conduct and what NPCI expects from every employee.",
@@ -62,8 +75,8 @@ const MODULES: LearningModule[] = [
     status: "coming-soon",
   },
   {
-    id: "module-4",
-    number: 4,
+    id: "module-5",
+    number: 5,
     title: "Compensation & Benefits",
     description:
       "Understand your pay structure, benefits, leaves and wellness programs.",
@@ -118,15 +131,6 @@ export default function HRInductionModules() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           >
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard")}
-              className="mb-6 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
-            >
-              <span className="text-base" aria-hidden>←</span>
-              Dashboard
-            </button>
-
             <ul className="grid gap-4 sm:grid-cols-2">
               {MODULES.map((module, index) => {
                 const isLocked = module.status === "coming-soon";
@@ -211,6 +215,15 @@ export default function HRInductionModules() {
                 );
               })}
             </ul>
+
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
+            >
+              <span className="text-base" aria-hidden>←</span>
+              Dashboard
+            </button>
           </motion.div>
         </div>
       </div>

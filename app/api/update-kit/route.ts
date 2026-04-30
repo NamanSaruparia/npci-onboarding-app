@@ -6,7 +6,7 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { mobile, selectedItems } = await req.json();
+    const { mobile, selectedItems, selectedCardVariant, bankName } = await req.json();
     const cleanMobile = String(mobile ?? "").trim();
 
     if (!cleanMobile || !isValidMobile(cleanMobile)) {
@@ -23,9 +23,20 @@ export async function POST(req: Request) {
       );
     }
 
+    const cardVariant = String(selectedCardVariant ?? "").trim();
+    const bank = String(bankName ?? "").trim();
+
     const user = await User.findOneAndUpdate(
       { mobile: cleanMobile },
-      { $set: { onboardingKit: selectedItems } },
+      {
+        $set: {
+          onboardingKit: selectedItems,
+          onboardingKitDetails: {
+            selectedCardVariant: cardVariant,
+            bankName: bank,
+          },
+        },
+      },
       { new: true }
     );
 
@@ -33,7 +44,11 @@ export async function POST(req: Request) {
       return Response.json({ message: "User not found." }, { status: 404 });
     }
 
-    return Response.json({ success: true, onboardingKit: user.onboardingKit });
+    return Response.json({
+      success: true,
+      onboardingKit: user.onboardingKit,
+      onboardingKitDetails: user.onboardingKitDetails,
+    });
   } catch (err) {
     console.error("[API ERROR]", err);
     return Response.json(

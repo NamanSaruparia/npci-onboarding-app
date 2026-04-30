@@ -38,6 +38,11 @@ interface IFeedbackSurvey {
   submittedAt?: Date;
 }
 
+interface IOnboardingKitDetails {
+  selectedCardVariant: string;
+  bankName: string;
+}
+
 export interface IUser {
   name: string;
   mobile: string;
@@ -56,6 +61,7 @@ export interface IUser {
   documents: IUserDocument[];
   uploadedDocs: number;
   onboardingKit: string[];
+  onboardingKitDetails: IOnboardingKitDetails;
   buddyAnswers: IBuddyAnswer[];
   isAdmin: boolean;
   checkInAnswers: ICheckInAnswers | null;
@@ -123,6 +129,14 @@ const FeedbackSurveySchema = new mongoose.Schema(
     q5: { type: String, default: "" },
     q6: { type: String, default: "" },
     submittedAt: { type: Date },
+  },
+  { _id: false }
+);
+
+const OnboardingKitDetailsSchema = new mongoose.Schema(
+  {
+    selectedCardVariant: { type: String, default: "" },
+    bankName: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -203,6 +217,13 @@ const UserSchema = new mongoose.Schema<IUser>({
     type: [String],
     default: [],
   },
+  onboardingKitDetails: {
+    type: OnboardingKitDetailsSchema,
+    default: () => ({
+      selectedCardVariant: "",
+      bankName: "",
+    }),
+  },
   buddyAnswers: {
     type: [BuddyAnswerSchema],
     default: [],
@@ -233,6 +254,7 @@ if (
   (!ExistingUserModel.schema.path("documents") ||
     !ExistingUserModel.schema.path("documents.docId") ||
     !ExistingUserModel.schema.path("documents.fileId") ||
+    !ExistingUserModel.schema.path("onboardingKitDetails") ||
     !ExistingUserModel.schema.path("buddyAnswers") ||
     !ExistingUserModel.schema.path("checkInAnswers") ||
     !ExistingUserModel.schema.path("feedbackSurvey") ||

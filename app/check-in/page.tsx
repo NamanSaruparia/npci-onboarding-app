@@ -171,15 +171,6 @@ export default function CheckIn() {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-4"
         >
-          {/* Back button */}
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard")}
-            className="mb-2 inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
-          >
-            <span aria-hidden>←</span> Dashboard
-          </button>
-
           {submitted ? (
             // ── Success state ──────────────────────────────────────────────
             <motion.div
@@ -249,6 +240,16 @@ export default function CheckIn() {
                 {saving ? "Saving…" : "Submit Check-In ✓"}
               </motion.button>
             </>
+          )}
+
+          {!submitted && (
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-gray-300 hover:text-slate-900"
+            >
+              <span aria-hidden>←</span> Dashboard
+            </button>
           )}
         </motion.div>
       </div>

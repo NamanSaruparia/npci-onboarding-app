@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
     const users = await User.find({})
       .sort({ createdAt: -1 })
-      .select("name mobile position role location profileImageUrl employeeType entity band reportingManager isAllowed isVerified isAdmin uploadedDocs documents buddyAnswers checkInAnswers onboardingKit createdAt updatedAt");
+      .select("name mobile position role location profileImageUrl employeeType entity band reportingManager isAllowed isVerified isAdmin uploadedDocs documents buddyAnswers checkInAnswers feedbackSurvey onboardingKit onboardingKitDetails createdAt updatedAt");
 
     return Response.json({ success: true, users });
   } catch (err) {

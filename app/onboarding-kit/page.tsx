@@ -61,6 +61,9 @@ export default function OnboardingKitPage() {
         });
         const data = await res.json();
         const kit: string[] = data?.user?.onboardingKit || [];
+        const kitDetails = data?.user?.onboardingKitDetails;
+        setSelectedCardVariant(String(kitDetails?.selectedCardVariant ?? ""));
+        setBankName(String(kitDetails?.bankName ?? ""));
         if (kit.length > 0) {
           setSelected(new Set(kit));
           setMode("submitted");
@@ -118,6 +121,8 @@ export default function OnboardingKitPage() {
         body: JSON.stringify({
           mobile: u.mobile,
           selectedItems: Array.from(selected),
+          selectedCardVariant,
+          bankName,
         }),
       });
       const data = await res.json();
@@ -145,14 +150,6 @@ export default function OnboardingKitPage() {
             subtitle="Choose the items you'd like to receive on Day 1."
             titleEmoji="🎁"
           />
-
-          <button
-            type="button"
-            onClick={() => router.push("/dashboard")}
-            className="mb-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-          >
-            <span aria-hidden>←</span> Dashboard
-          </button>
 
           {/* Hero banner */}
           <motion.div
@@ -480,6 +477,14 @@ export default function OnboardingKitPage() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          <button
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+          >
+            <span aria-hidden>←</span> Dashboard
+          </button>
         </div>
       </div>
     </div>

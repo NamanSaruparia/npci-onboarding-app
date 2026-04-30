@@ -298,15 +298,6 @@ function VideosContent() {
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="space-y-6"
           >
-            {/* Back */}
-            <button
-              type="button"
-              onClick={() => router.push("/dashboard")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
-            >
-              <span aria-hidden>←</span> Dashboard
-            </button>
-
             {/* Stats strip */}
             <div className="flex items-center gap-4 overflow-x-auto rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white px-5 py-3.5 shadow-sm">
               <div className="shrink-0 text-center">
@@ -379,6 +370,14 @@ function VideosContent() {
                 </motion.div>
               </AnimatePresence>
             </section>
+
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+            >
+              <span aria-hidden>←</span> Dashboard
+            </button>
           </motion.div>
         </div>
       </div>
