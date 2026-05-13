@@ -8,15 +8,12 @@ import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
 import { parseSessionUser } from "@/app/lib/session";
-import { useNotifications } from "../context/NotificationContext";
 import { usePageTimer } from "../hooks/usePageTimer";
 import {
   formatLongDate,
   goalFirstDraftDueIso,
   parseJoiningIso,
 } from "@/app/lib/onboarding-dates";
-
-const DASHBOARD_TILE_FLAGS_KEY = "dashboard_tile_flags";
 
 type GoalArea = {
   title: string;
@@ -45,7 +42,6 @@ const GOAL_AREAS: GoalArea[] = [
 export default function GoalAlignmentPage() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
-  const { triggerEvent } = useNotifications();
   usePageTimer(sessionUser?.mobile);
   const joiningFromSession = useMemo(
     () => parseJoiningIso(sessionUser?.dayOfJoining),
@@ -195,12 +191,6 @@ export default function GoalAlignmentPage() {
                           toast("Goal alignment link will be shared soon.");
                           return;
                         }
-                        try {
-                          const raw = localStorage.getItem(DASHBOARD_TILE_FLAGS_KEY);
-                          const existing = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-                          localStorage.setItem(DASHBOARD_TILE_FLAGS_KEY, JSON.stringify({ ...existing, goalAlignmentDone: true }));
-                        } catch { /* ignore */ }
-                        triggerEvent("goal_alignment_opened", "🎯 Goal Alignment opened — submit your draft on time.", "activity");
                         window.open(goalAlignmentUrl, "_blank");
                       }}
                       className={[

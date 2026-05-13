@@ -76,7 +76,7 @@ const MODULES: LearningModule[] = [
     gradient: "from-fuchsia-500 to-pink-500",
     accent: "bg-fuchsia-50 text-fuchsia-700 ring-fuchsia-100",
     href: "/learn/hr-induction/module-2",
-    status: "available",
+    status: "coming-soon",
   },
   {
     id: "module-3",
@@ -89,7 +89,7 @@ const MODULES: LearningModule[] = [
     gradient: "from-amber-500 to-orange-500",
     accent: "bg-amber-50 text-amber-700 ring-amber-100",
     href: "/learn/hr-induction/module-3",
-    status: "available",
+    status: "coming-soon",
   },
 ];
 

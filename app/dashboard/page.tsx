@@ -409,7 +409,17 @@ export default function Dashboard() {
 
   const weekCards: MiniCardItem[] = [
     { title: "15 day check in", emoji: "📅", onClick: () => router.push("/check-in") },
-    { title: "Goal alignment", emoji: "🎯", onClick: () => router.push("/goal-alignment") },
+    {
+      title: "Goal alignment",
+      emoji: "🎯",
+      onClick: () => {
+        const next = { ...tileFlags, goalAlignmentDone: true };
+        setTileFlags(next);
+        saveTileFlags(next);
+        triggerEvent("goal_alignment_opened", "🎯 Goal Alignment opened — submit your draft on time.", "activity");
+        router.push("/goal-alignment");
+      },
+    },
     { title: "Mini Assignment", emoji: "📋", onClick: () => router.push("/mini-assignment") },
     { title: "30th day Onboarding feedback survey", emoji: "📝", onClick: () => router.push("/onboarding-feedback-survey") },
   ];
