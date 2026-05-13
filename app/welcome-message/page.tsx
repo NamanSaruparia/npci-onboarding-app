@@ -277,8 +277,7 @@ export default function WelcomeMessagePage() {
                     className="mt-8 flex flex-col items-center gap-4"
                   >
                     <p className="max-w-md rounded-2xl border border-emerald-100 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-800">
-                      You&apos;re all set — explore document tracker and learning
-                      next from the dashboard.
+                      You&apos;re all set — your onboarding journey starts now.
                     </p>
                     <motion.button
                       type="button"
