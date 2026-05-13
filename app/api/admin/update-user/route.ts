@@ -9,7 +9,17 @@ export async function POST(req: Request) {
   try {
     await connectDB();
 
-    const { mobile, employeeType, entity, band, dayOfJoining } = await req.json();
+    const {
+      mobile,
+      name,
+      position,
+      location,
+      reportingManager,
+      employeeType,
+      entity,
+      band,
+      dayOfJoining,
+    } = await req.json();
     const cleanMobile = String(mobile ?? "").trim();
 
     if (!cleanMobile || !isValidMobile(cleanMobile)) {
@@ -43,11 +53,29 @@ export async function POST(req: Request) {
       );
     }
 
+    const allowedLocations = ["Hyderabad", "Mumbai", "Chennai"];
+
     const update: Record<string, unknown> = {
       employeeType: String(employeeType),
       entity: String(entity),
       band: String(band),
     };
+
+    if (name && String(name).trim()) {
+      const t = String(name).trim();
+      update.name = t;
+    }
+    if (position && String(position).trim()) {
+      const t = String(position).trim();
+      update.position = t;
+      update.role = t;
+    }
+    if (location && allowedLocations.includes(String(location))) {
+      update.location = String(location);
+    }
+    if (reportingManager != null && String(reportingManager).trim()) {
+      update.reportingManager = String(reportingManager).trim();
+    }
 
     if (dayOfJoining === null || dayOfJoining === "") {
       update.dayOfJoining = null;

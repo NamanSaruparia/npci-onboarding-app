@@ -8,6 +8,8 @@ import { parseSessionUser } from "@/app/lib/session";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
+import { useNotifications } from "../context/NotificationContext";
+import { usePageTimer } from "../hooks/usePageTimer";
 
 type Question = {
   id: string;
@@ -84,6 +86,8 @@ function firstName(name: string) {
 export default function KnowMorePage() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
+  const { triggerEvent } = useNotifications();
+  usePageTimer(sessionUser?.mobile);
 
   const [answers, setAnswers] = useState<Record<string, string>>(() =>
     Object.fromEntries(QUESTIONS.map((q) => [q.id, ""]))
@@ -148,6 +152,7 @@ export default function KnowMorePage() {
       localStorage.setItem("buddyAnswers", JSON.stringify(answers));
       setSaved(true);
       toast.success("Your answers have been saved!");
+      triggerEvent("profile_saved", "👤 Your profile has been saved.", "activity");
     } catch {
       toast.error("Network error. Try again.");
     } finally {

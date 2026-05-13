@@ -60,7 +60,7 @@ export async function sendUemApprovalNotification({
           This is an automated notification from the NPCI Onboarding platform. Please do not reply to this email.
         </p>
       </div>
-      <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 16px;">NPCI Navigators · Onboarding System</p>
+      <p style="text-align: center; color: #94a3b8; font-size: 12px; margin-top: 16px;">NPCI Navigator · Onboarding System</p>
     </div>
   `;
 

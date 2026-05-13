@@ -269,7 +269,7 @@ export default function Documents() {
 
       if (res.ok && data.success) {
         toast.success("Document uploaded successfully.");
-        addNotification("Your document has been uploaded and is pending review.");
+        addNotification("📄 Document uploaded and pending HR review.", "activity");
         window.location.reload();
       } else {
         toast.error("Upload failed. Please try again.");

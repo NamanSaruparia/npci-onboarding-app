@@ -33,7 +33,7 @@ function SlideCard({ children }: { children: React.ReactNode }) {
 
 export default function Login() {
   const router = useRouter();
-  const { addNotification } = useNotifications();
+  const { addNotification, initForUser } = useNotifications();
 
   const [authChecked, setAuthChecked] = useState(false);
   const [role, setRole] = useState<Role>("employee");
@@ -144,7 +144,12 @@ export default function Login() {
       );
 
       toast.success("Login successful!");
-      addNotification("Welcome to NPCI Navigators! 👋");
+      const loggedInMobile = String(u.mobile ?? normalizeMobile(mobile)).trim();
+      initForUser(loggedInMobile);
+      addNotification(
+        `Welcome back${u.name ? `, ${String(u.name).split(" ")[0]}` : ""}! Ready to continue your journey.`,
+        "activity"
+      );
 
       // Route based on the role pill the user selected
       if (isAdmin) {
@@ -175,7 +180,7 @@ export default function Login() {
           {/* Header */}
           <div className="mb-7 text-center">
             <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              NPCI Navigators
+              NPCI Navigator
             </h1>
             <p className="mt-1 text-sm text-slate-500">
               {step === "role" && "Select your login type to continue"}

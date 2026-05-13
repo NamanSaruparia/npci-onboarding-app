@@ -3,10 +3,16 @@
 import { motion } from "framer-motion";
 import { Newsreader } from "next/font/google";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { PageHeader } from "../../components/PageHeader";
 import { SessionLoading } from "../../components/SessionLoading";
 import { useRequireSession } from "../../hooks/useRequireSession";
+import { useNotifications } from "../../context/NotificationContext";
+import { usePageTimer } from "../../hooks/usePageTimer";
+
+const DASHBOARD_TILE_FLAGS_KEY = "dashboard_tile_flags";
+const INDUCTION_VISITED_KEY = "induction_visited_modules";
 
 const moduleBlurb = Newsreader({
   subsets: ["latin"],
@@ -87,9 +93,41 @@ const MODULES: LearningModule[] = [
   },
 ];
 
+const ALL_MODULE_IDS = MODULES.filter((m) => m.status === "available").map((m) => m.id);
+
+function readVisitedModules(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(INDUCTION_VISITED_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function markInductionDone() {
+  try {
+    const raw = localStorage.getItem(DASHBOARD_TILE_FLAGS_KEY);
+    const existing = raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+    if (!existing.hrInductionDone) {
+      localStorage.setItem(DASHBOARD_TILE_FLAGS_KEY, JSON.stringify({ ...existing, hrInductionDone: true }));
+    }
+  } catch { /* ignore */ }
+}
+
 export default function HRInductionModules() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
+  const { triggerEvent } = useNotifications();
+  usePageTimer(sessionUser?.mobile);
+  const [visitedModules, setVisitedModules] = useState<string[]>(readVisitedModules);
+
+  // If all modules were already visited in a previous session, mark induction done
+  useEffect(() => {
+    if (ALL_MODULE_IDS.every((id) => visitedModules.includes(id))) {
+      markInductionDone();
+    }
+  }, [visitedModules]);
 
   if (!ready || !sessionUser) {
     return <SessionLoading />;
@@ -97,6 +135,21 @@ export default function HRInductionModules() {
 
   const handleModuleClick = (module: LearningModule) => {
     if (module.status === "available" && module.href) {
+      const updated = visitedModules.includes(module.id)
+        ? visitedModules
+        : [...visitedModules, module.id];
+
+      if (updated.length !== visitedModules.length) {
+        setVisitedModules(updated);
+        try {
+          localStorage.setItem(INDUCTION_VISITED_KEY, JSON.stringify(updated));
+          if (ALL_MODULE_IDS.every((id) => updated.includes(id))) {
+            markInductionDone();
+            triggerEvent("induction_complete", "🏛️ You've opened all induction modules.", "activity");
+          }
+        } catch { /* ignore */ }
+      }
+
       router.push(module.href);
       return;
     }
@@ -121,6 +174,7 @@ export default function HRInductionModules() {
             <ul className="grid gap-4 sm:grid-cols-2">
               {MODULES.map((module, index) => {
                 const isLocked = module.status === "coming-soon";
+                const isVisited = visitedModules.includes(module.id);
                 return (
                   <motion.li
                     key={module.id}
@@ -140,9 +194,16 @@ export default function HRInductionModules() {
                         "group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border bg-white p-5 text-left shadow-sm transition",
                         isLocked
                           ? "cursor-not-allowed border-slate-100 opacity-90"
-                          : "border-slate-100 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100/60",
+                          : isVisited
+                            ? "border-emerald-200 hover:-translate-y-0.5 hover:shadow-lg"
+                            : "border-slate-100 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100/60",
                       ].join(" ")}
                     >
+                      {isVisited && (
+                        <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                          ✓ Opened
+                        </span>
+                      )}
                       <div
                         className={[
                           "pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br opacity-20 blur-2xl transition group-hover:opacity-40",

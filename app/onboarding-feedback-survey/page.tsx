@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
+import { useNotifications } from "../context/NotificationContext";
+import { usePageTimer } from "../hooks/usePageTimer";
 
 // ─── Emoji scale ─────────────────────────────────────────────────────────────
 
@@ -115,6 +117,8 @@ type Answers = {
 export default function OnboardingFeedbackSurveyPage() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
+  const { triggerEvent } = useNotifications();
+  usePageTimer(sessionUser?.mobile);
 
   const [answers, setAnswers] = useState<Answers>({
     q1: 0,
@@ -162,6 +166,7 @@ export default function OnboardingFeedbackSurveyPage() {
         return;
       }
       setSubmitted(true);
+      triggerEvent("feedback_submitted", "📝 30-Day Onboarding Feedback Survey submitted.", "activity");
     } catch {
       toast.error("Network error. Please try again.");
     } finally {

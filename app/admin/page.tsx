@@ -308,6 +308,10 @@ export default function AdminPage() {
       const payload = editingUser
         ? {
             mobile: normalized,
+            name: name.trim() || editingUser.name,
+            position: position.trim() || editingUser.position,
+            location: location || editingUser.location,
+            reportingManager: reportingManager.trim() || editingUser.reportingManager,
             employeeType,
             entity,
             band,
@@ -347,9 +351,18 @@ export default function AdminPage() {
       setBand("");
       setDayOfJoiningInput("");
       setProfileImageFile(null);
+      const savedUser = data?.user as AdminUser | undefined;
+      if (savedUser) {
+        if (editingUser) {
+          setUsers((prev) =>
+            prev.map((u) => (u.mobile === savedUser.mobile ? { ...u, ...savedUser } : u))
+          );
+        } else {
+          setUsers((prev) => [savedUser, ...prev]);
+        }
+      }
       setEditingUser(null);
       toast.success(editingUser ? "User updated successfully." : "User added and allowed for onboarding.");
-      await fetchUsers();
     } catch {
       toast.error("Network error while adding user.");
     } finally {
@@ -385,8 +398,13 @@ export default function AdminPage() {
         toast.error(data?.message || "Unable to update access.");
         return;
       }
+      const updatedUser = data?.user as AdminUser | undefined;
+      if (updatedUser) {
+        setUsers((prev) =>
+          prev.map((u) => (u.mobile === updatedUser.mobile ? { ...u, ...updatedUser } : u))
+        );
+      }
       toast.success(data?.user?.isAllowed ? "User allowed." : "User blocked.");
-      await fetchUsers();
     } catch {
       toast.error("Network error while toggling access.");
     } finally {
@@ -407,8 +425,8 @@ export default function AdminPage() {
         toast.error(data?.message || "Unable to delete user.");
         return;
       }
+      setUsers((prev) => prev.filter((u) => u.mobile !== targetMobile));
       toast.success("User deleted.");
-      await fetchUsers();
     } catch {
       toast.error("Network error while deleting user.");
     } finally {
@@ -492,8 +510,16 @@ export default function AdminPage() {
         toast.error(data?.message || "Unable to save mini assignment.");
         return;
       }
+      if (data?.config && miniEdit) {
+        const targetMobile = miniEdit.mobile;
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.mobile === targetMobile ? { ...u, miniAssignmentConfig: data.config } : u
+          )
+        );
+      }
+      setMiniEdit(null);
       toast.success("Mini assignment updated.");
-      await fetchUsers();
     } catch {
       toast.error("Network error while saving mini assignment.");
     } finally {

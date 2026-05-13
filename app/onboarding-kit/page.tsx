@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
+import { useNotifications } from "../context/NotificationContext";
+import { usePageTimer } from "../hooks/usePageTimer";
 import { parseSessionUser } from "@/app/lib/session";
 
 const onboardingKitItems = [
@@ -36,6 +38,8 @@ type Mode = "loading" | "select" | "submitted";
 export default function OnboardingKitPage() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
+  const { triggerEvent } = useNotifications();
+  usePageTimer(sessionUser?.mobile);
   const [mode, setMode] = useState<Mode>("loading");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
@@ -131,6 +135,7 @@ export default function OnboardingKitPage() {
         return;
       }
       toast.success("Onboarding kit saved! We'll have it ready for Day 1.");
+      triggerEvent("kit_submitted", "✅ Onboarding kit confirmed — your selections have been saved.", "activity");
       setMode("submitted");
     } catch {
       toast.error("Network error. Please try again.");

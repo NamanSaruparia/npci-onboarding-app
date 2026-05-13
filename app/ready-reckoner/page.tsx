@@ -176,7 +176,7 @@ export default function ReadyReckoner() {
                 </span>
                 <div>
                   <p className="text-sm font-bold text-slate-800">{location} SPOCs</p>
-                  <p className="text-xs text-slate-400">Your key contacts for Day 1 onboarding</p>
+                  <p className="text-xs text-slate-400">Your key contacts for First Impressions</p>
                 </div>
               </div>
 

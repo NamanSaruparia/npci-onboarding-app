@@ -13,8 +13,13 @@ export type SessionUser = {
   isVerified?: boolean;
   isAdmin?: boolean;
   uploadedDocs?: number;
-  /** ISO string from API / admin “date of joining” (calendar). */
+  /** ISO string from API / admin "date of joining" (calendar). */
   dayOfJoining?: string | null;
+  /** Populated from DB on every dashboard load — always reflects latest admin edits. */
+  entity?: string;
+  band?: string;
+  employeeType?: string;
+  reportingManager?: string;
   [key: string]: unknown;
 };
 

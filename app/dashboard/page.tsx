@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useNotifications } from "../context/NotificationContext";
+import { usePageTimer } from "../hooks/usePageTimer";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
 import { parseSessionUser, type SessionUser } from "@/app/lib/session";
@@ -27,15 +28,13 @@ const DASHBOARD_TILE_FLAGS_KEY = "dashboard_tile_flags";
 const DASHBOARD_BADGES_KEY = "dashboard_badges";
 
 type DashboardTileFlags = {
-  deepDiveDone: boolean;
   hrInductionDone: boolean;
-  readyReckonerDone: boolean;
+  goalAlignmentDone: boolean;
 };
 
 const DEFAULT_TILE_FLAGS: DashboardTileFlags = {
-  deepDiveDone: false,
   hrInductionDone: false,
-  readyReckonerDone: false,
+  goalAlignmentDone: false,
 };
 
 type DashboardBadgeFlags = {
@@ -59,9 +58,8 @@ function readTileFlags(): DashboardTileFlags {
     if (!raw) return DEFAULT_TILE_FLAGS;
     const parsed = JSON.parse(raw) as Partial<DashboardTileFlags>;
     return {
-      deepDiveDone: Boolean(parsed.deepDiveDone),
       hrInductionDone: Boolean(parsed.hrInductionDone),
-      readyReckonerDone: Boolean(parsed.readyReckonerDone),
+      goalAlignmentDone: Boolean(parsed.goalAlignmentDone),
     };
   } catch {
     return DEFAULT_TILE_FLAGS;
@@ -99,28 +97,29 @@ export default function Dashboard() {
   const router = useRouter();
   const { ready: sessionReady, sessionUser, replaceSession } = useRequireSession();
 
-  const { notifications: ctxNotifications, unreadCount, markAllRead, markRead, addNotification } = useNotifications();
+  const { notifications: ctxNotifications, unreadCount, markAllRead, markRead, triggerEvent, initForUser } = useNotifications();
   const [onboardingKitDone, setOnboardingKitDone] = useState(false);
   const [profileDone, setProfileDone] = useState(false);
   const [checkInDone, setCheckInDone] = useState(false);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [miniAssignmentDone, setMiniAssignmentDone] = useState(false);
   const [tileFlags, setTileFlags] = useState<DashboardTileFlags>(readTileFlags);
   const [badgeFlags, setBadgeFlags] = useState<DashboardBadgeFlags>(readBadgeFlags);
 
   const preCompletedCount =
-    Number(onboardingKitDone) + Number(profileDone) + Number(tileFlags.deepDiveDone);
-  const preOnboardingProgress = Math.round((preCompletedCount / 3) * 100);
+    Number(onboardingKitDone) + Number(profileDone);
+  const preOnboardingProgress = Math.round((preCompletedCount / 2) * 100);
 
   const overallCompletedCount =
     Number(onboardingKitDone) +
     Number(profileDone) +
-    Number(tileFlags.deepDiveDone) +
     Number(tileFlags.hrInductionDone) +
-    Number(tileFlags.readyReckonerDone) +
+    Number(tileFlags.goalAlignmentDone) +
+    Number(miniAssignmentDone) +
     Number(checkInDone) +
     Number(feedbackDone);
   const overallProgress = Math.round((overallCompletedCount / 7) * 100);
-  const day1OnboardingDone = tileFlags.hrInductionDone && tileFlags.readyReckonerDone;
+  const day1OnboardingDone = tileFlags.hrInductionDone;
 
   const [stageStatus, setStageStatus] = useState<
     Record<StageId, StageStatus>
@@ -202,26 +201,42 @@ export default function Dashboard() {
     setBadgeFlags(next);
     saveBadgeFlags(next);
 
-    if (unlockedNow.explorer) {
-      addNotification("🏅 Explorer badge unlocked! You completed Pre-Onboarding.");
-    }
-    if (unlockedNow.collaborator) {
-      addNotification("🤝 Collaborator badge unlocked! You completed Day 1 Onboarding.");
-    }
-    if (unlockedNow.achiever) {
-      addNotification("🎖️ Achiever badge unlocked! Mid Journey Check-In completed.");
-    }
-    if (unlockedNow.navigator) {
-      addNotification("🥇 Navigator badge unlocked! Onboarding Feedback Survey completed.");
-    }
+    if (unlockedNow.explorer)
+      triggerEvent("badge_explorer", "🏅 Explorer badge unlocked! Welcome Aboard phase complete.", "badge");
+    if (unlockedNow.collaborator)
+      triggerEvent("badge_collaborator", "🤝 Collaborator badge unlocked! First Impressions phase complete.", "badge");
+    if (unlockedNow.achiever)
+      triggerEvent("badge_achiever", "🎖️ Achiever badge unlocked! 15-Day Check-In completed.", "badge");
+    if (unlockedNow.navigator)
+      triggerEvent("badge_navigator", "🥇 Navigator badge unlocked! Feedback Survey completed.", "badge");
   }, [
     preOnboardingProgress,
     day1OnboardingDone,
     checkInDone,
     feedbackDone,
     badgeFlags,
-    addNotification,
+    triggerEvent,
   ]);
+
+  // Progress milestone notifications
+  useEffect(() => {
+    if (overallProgress >= 25)
+      triggerEvent("progress_25", "You're 25% through your onboarding — good start.", "milestone");
+    if (overallProgress >= 50)
+      triggerEvent("progress_50", "Halfway through your onboarding journey!", "milestone");
+    if (overallProgress >= 75)
+      triggerEvent("progress_75", "75% done — the finish line is in sight.", "milestone");
+    if (overallProgress >= 100)
+      triggerEvent("progress_100", "🎉 Onboarding complete! You've done it.", "milestone");
+  }, [overallProgress, triggerEvent]);
+
+  // Day-of-joining notifications
+  useEffect(() => {
+    if (daysUntilDay1 === 1)
+      triggerEvent("day1_tomorrow", "🗓️ Day 1 is tomorrow — you're all set!", "doj");
+    if (daysUntilDay1 === 0)
+      triggerEvent("day1_today", "🎉 Today is your Day 1 at NPCI. Welcome aboard!", "doj");
+  }, [daysUntilDay1, triggerEvent]);
 
   useEffect(() => {
     const t = window.setTimeout(() => setLoading(false), 640);
@@ -254,11 +269,15 @@ export default function Dashboard() {
             data.user.buddyAnswers.some((a: { answer?: string }) => String(a?.answer || "").trim());
           const nextCheckInDone = Boolean(data.user.checkInAnswers?.submittedAt);
           const nextFeedbackDone = Boolean(data.user.feedbackSurvey?.submittedAt);
+          const nextMiniAssignmentDone = Boolean(data.user.miniAssignmentSubmission?.submittedAt);
 
           setOnboardingKitDone(nextKitDone);
           setProfileDone(nextProfileDone);
           setCheckInDone(nextCheckInDone);
           setFeedbackDone(nextFeedbackDone);
+          setMiniAssignmentDone(nextMiniAssignmentDone);
+
+          initForUser(String(u.mobile).trim());
 
           const doj =
             data.user.dayOfJoining != null
@@ -276,6 +295,10 @@ export default function Dashboard() {
             isVerified: data.user.isVerified ?? u.isVerified ?? false,
             isAllowed: data.user.isAllowed ?? u.isAllowed ?? false,
             uploadedDocs: data.user.uploadedDocs || 0,
+            entity: data.user.entity || u.entity || "",
+            band: data.user.band || u.band || "",
+            employeeType: data.user.employeeType || u.employeeType || "",
+            reportingManager: data.user.reportingManager || u.reportingManager || "",
             ...(doj ? { dayOfJoining: doj } : { dayOfJoining: null }),
           };
 
@@ -287,7 +310,7 @@ export default function Dashboard() {
     };
 
     void fetchUser();
-  }, [sessionReady, replaceSession]);
+  }, [sessionReady, replaceSession, initForUser]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -296,6 +319,9 @@ export default function Dashboard() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+
+  // Accumulate time on dashboard for time-based notifications
+  usePageTimer(sessionUser?.mobile);
 
   if (!sessionReady || !sessionUser || loading) {
     return <SessionLoading />;
@@ -310,34 +336,6 @@ export default function Dashboard() {
   const roleLine = String(user.role || user.position || "").trim();
   const displayRole = roleLine || "\u2014";
 
-  const notifications: string[] = [];
-
-  notifications.push(
-    `${displayName}, your onboarding workspace is up to date.`
-  );
-
-  if (daysUntilDay1 == null) {
-    notifications.push(
-      "Ask HR to add your date of joining in the admin panel so countdowns and goal timelines stay accurate."
-    );
-  } else if (daysUntilDay1 > 3) {
-    notifications.push(`${daysUntilDay1} days until Day 1 — you are on track.`);
-  } else if (daysUntilDay1 > 0) {
-    notifications.push(`${daysUntilDay1} days left — close out remaining tasks.`);
-  } else {
-    notifications.push("You are on or past Day 1 — keep momentum with your onboarding modules.");
-  }
-
-  if (overallProgress < 50) {
-    notifications.push("Early stage — settle in and explore your onboarding journey.");
-  } else if (overallProgress < 80) {
-    notifications.push("Solid momentum — keep engaging with your onboarding modules.");
-  } else {
-    notifications.push("Final stretch — you are almost ready for Day 1.");
-  }
-
-  notifications.push("New curated sessions are available under Learning.");
-  notifications.push("Thank you for shaping India’s digital payments story.");
 
   const advanceStage = (completed: StageId) => {
     const order: StageId[] = ["pre", "day1", "week", "integration"];
@@ -392,12 +390,7 @@ export default function Dashboard() {
     {
       title: "NPCI deep dive",
       emoji: "🔍",
-      onClick: () => {
-        const next = { ...tileFlags, deepDiveDone: true };
-        setTileFlags(next);
-        saveTileFlags(next);
-        router.push("/videos?tab=deep-dive");
-      },
+      onClick: () => router.push("/videos?tab=deep-dive"),
     },
   ];
 
@@ -405,30 +398,20 @@ export default function Dashboard() {
     {
       title: "Induction",
       emoji: "🏛️",
-      onClick: () => {
-        const next = { ...tileFlags, hrInductionDone: true };
-        setTileFlags(next);
-        saveTileFlags(next);
-        router.push("/learn/hr-induction");
-      },
+      onClick: () => router.push("/learn/hr-induction"),
     },
     {
       title: "Ready reckoner",
       emoji: "📘",
-      onClick: () => {
-        const next = { ...tileFlags, readyReckonerDone: true };
-        setTileFlags(next);
-        saveTileFlags(next);
-        router.push("/ready-reckoner");
-      },
+      onClick: () => router.push("/ready-reckoner"),
     },
   ];
 
   const weekCards: MiniCardItem[] = [
-    { title: "Mid journey check in", emoji: "📅", onClick: () => router.push("/check-in") },
+    { title: "15 day check in", emoji: "📅", onClick: () => router.push("/check-in") },
     { title: "Goal alignment", emoji: "🎯", onClick: () => router.push("/goal-alignment") },
     { title: "Mini Assignment", emoji: "📋", onClick: () => router.push("/mini-assignment") },
-    { title: "Onboarding Feedback Survey", emoji: "📝", onClick: () => router.push("/onboarding-feedback-survey") },
+    { title: "30th day Onboarding feedback survey", emoji: "📝", onClick: () => router.push("/onboarding-feedback-survey") },
   ];
 
   const integrationCards: MiniCardItem[] = [
@@ -437,14 +420,14 @@ export default function Dashboard() {
       emoji: "🛡️",
       completed: badgeFlags.explorer,
       onClick: () =>
-        toast(badgeFlags.explorer ? "Explorer badge unlocked ✅" : "Complete Pre-Onboarding to unlock."),
+        toast(badgeFlags.explorer ? "Explorer badge unlocked ✅" : "Complete Welcome Aboard to unlock."),
     },
     {
       title: "Collaborator",
       emoji: "🏆",
       completed: badgeFlags.collaborator,
       onClick: () =>
-        toast(badgeFlags.collaborator ? "Collaborator badge unlocked ✅" : "Complete Day 1 Onboarding to unlock."),
+        toast(badgeFlags.collaborator ? "Collaborator badge unlocked ✅" : "Complete First Impressions to unlock."),
     },
     {
       title: "Achiever",
@@ -523,52 +506,46 @@ export default function Dashboard() {
                     aria-label="Close notifications"
                     onClick={() => setShowNotifications(false)}
                   />
-                  <div className="fixed left-1/2 top-[4.5rem] z-50 w-[min(calc(100vw-2.5rem),22rem)] max-h-[min(70vh,24rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:translate-x-0">
-                    {/* Dynamic notifications from context */}
-                    {ctxNotifications.some((n) => !n.read) && (
-                      <>
-                        <div className="mb-3 flex items-center justify-between">
-                          <h2 className="text-sm font-semibold text-slate-700">Notifications</h2>
-                          <button
-                            type="button"
-                            onClick={markAllRead}
-                            className="text-xs font-medium text-primary transition hover:text-primary/70"
-                          >
-                            Clear
-                          </button>
-                        </div>
-                        <ul className="mb-4 space-y-2">
-                          {ctxNotifications.filter((n) => !n.read).map((n) => (
-                            <button
-                              key={n.id}
-                              type="button"
-                              onClick={() => markRead(n.id)}
-                              className={[
-                                "w-full rounded-xl border px-3 py-2.5 text-left text-sm leading-snug transition",
-                                "border-indigo-100 bg-indigo-50 text-slate-700 hover:bg-indigo-100/60",
-                              ].join(" ")}
-                            >
-                              <p>{n.message}</p>
-                              <span className="mt-0.5 block text-[11px] text-slate-400">{n.time}</span>
-                            </button>
-                          ))}
-                        </ul>
-                        <hr className="mb-3 border-slate-100" />
-                      </>
-                    )}
-
-                    {/* Static system updates */}
-                    <h2 className="mb-3 text-sm font-semibold text-slate-700">Updates</h2>
-                    <ul className="space-y-2">
-                      {notifications.map((note, i) => (
-                        <li
-                          key={i}
-                          className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-sm leading-snug text-slate-600 transition hover:bg-slate-100"
+                  <div className="fixed left-1/2 top-[4.5rem] z-50 w-[min(calc(100vw-2.5rem),22rem)] max-h-[min(70vh,28rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:translate-x-0">
+                    <div className="mb-3 flex items-center justify-between">
+                      <h2 className="text-sm font-semibold text-slate-700">Notifications</h2>
+                      {ctxNotifications.some((n) => !n.read) && (
+                        <button
+                          type="button"
+                          onClick={markAllRead}
+                          className="text-xs font-medium text-primary transition hover:text-primary/70"
                         >
-                          {note}
-                        </li>
-                      ))}
-                    </ul>
+                          Clear all
+                        </button>
+                      )}
+                    </div>
+
+                    {ctxNotifications.length === 0 ? (
+                      <p className="py-6 text-center text-sm text-slate-400">
+                        No notifications yet — complete onboarding steps to see updates here.
+                      </p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {ctxNotifications.map((n) => (
+                          <button
+                            key={n.id}
+                            type="button"
+                            onClick={() => markRead(n.id)}
+                            className={[
+                              "w-full rounded-xl border px-3 py-2.5 text-left text-sm leading-snug transition",
+                              n.read
+                                ? "border-slate-100 bg-white text-slate-500 hover:bg-slate-50"
+                                : "border-indigo-100 bg-indigo-50 text-slate-700 hover:bg-indigo-100/60",
+                            ].join(" ")}
+                          >
+                            <p>{n.message}</p>
+                            <span className="mt-0.5 block text-[11px] text-slate-400">
+                              {formatNotifTime(n.time)}
+                            </span>
+                          </button>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </>
               )}
@@ -622,7 +599,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-around gap-4">
             <CircularProgress
               pct={preOnboardingProgress}
-              label="Pre-onboarding"
+              label="Welcome Aboard"
               color="#6366f1"
               trackColor="#e0e7ff"
               size={108}
@@ -640,11 +617,11 @@ export default function Dashboard() {
 
         <section className="mb-4">
           <h2 className="mb-4 text-base font-semibold text-slate-800">
-            Onboarding stages
+            Your Journey
           </h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <StageQuadrant
-              title="1. Pre-Onboarding"
+              title="1. Welcome Aboard"
               status={stageStatusForUi.pre}
               tone="pre"
               iconEmoji="📄"
@@ -654,7 +631,7 @@ export default function Dashboard() {
               previewTag={uiPreviewLockOverride ? previewStageTag.pre : undefined}
             />
             <StageQuadrant
-              title="2. Day 1 Onboarding"
+              title="2. First Impressions"
               status={stageStatusForUi.day1}
               tone="day1"
               iconEmoji="👥"
@@ -664,7 +641,7 @@ export default function Dashboard() {
               previewTag={uiPreviewLockOverride ? previewStageTag.day1 : undefined}
             />
             <StageQuadrant
-              title="3. 30 Day Journey"
+              title="3. Find your Rhythm"
               status={stageStatusForUi.week}
               tone="week"
               iconEmoji="📅"
@@ -674,11 +651,11 @@ export default function Dashboard() {
               previewTag={uiPreviewLockOverride ? previewStageTag.week : undefined}
             />
             <StageQuadrant
-              title="4. Earn Badges / Integration"
+              title="4. Wall of Milestones"
               status={stageStatusForUi.integration}
               tone="integration"
               iconEmoji="🏆"
-              description="Progress milestones and deeper integration."
+              description="Celebrate your milestones and earn your badges."
               cards={integrationCards}
               previewTag={uiPreviewLockOverride ? previewStageTag.integration : undefined}
             />
@@ -706,6 +683,22 @@ export default function Dashboard() {
       </div>
     </div>
   );
+}
+
+function formatNotifTime(iso: string): string {
+  try {
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diffMs / 60_000);
+    if (mins < 1) return "Just now";
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return "Yesterday";
+    return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+  } catch {
+    return "";
+  }
 }
 
 function CircularProgress({

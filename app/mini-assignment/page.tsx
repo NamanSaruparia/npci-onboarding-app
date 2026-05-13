@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { PageHeader } from "../components/PageHeader";
 import { SessionLoading } from "../components/SessionLoading";
 import { useRequireSession } from "../hooks/useRequireSession";
+import { useNotifications } from "../context/NotificationContext";
+import { usePageTimer } from "../hooks/usePageTimer";
 
 type Priority = "Low" | "Medium" | "High";
 
@@ -105,6 +107,8 @@ export default function MiniAssignmentPage() {
   const router = useRouter();
   const { ready, sessionUser } = useRequireSession();
 
+  const { triggerEvent } = useNotifications();
+  usePageTimer(sessionUser?.mobile);
   const mobile = sessionUser?.mobile ? String(sessionUser.mobile) : "";
 
   const [config, setConfig] = useState<MiniAssignmentConfig>(defaultConfig);
@@ -532,6 +536,7 @@ export default function MiniAssignmentPage() {
                             saveDraft({ ...draft, submittedAtISO: nowIso });
                             setServerSubmittedAtISO(nowIso);
                             toast.success("Submitted.");
+                            triggerEvent("mini_assignment_submitted", "📋 Mini Assignment submitted.", "activity");
                           } catch {
                             toast.error("Network error. Please try again.");
                           } finally {
